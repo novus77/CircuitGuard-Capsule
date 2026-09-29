@@ -278,7 +278,7 @@ git commit -m "feat: verify deployment identity across X Layer RPCs"
 - Create: `web/test/siteAttestation.test.ts`
 - Modify: `web/src/config/deployment.ts`
 
-- [ ] **Step 1: Write failing Site-attestation tests**
+- [x] **Step 1: Write failing Site-attestation tests**
 
 ```typescript
 const expected = makeDeployedManifest()
@@ -290,13 +290,13 @@ expect(() => createE2ESiteAttestation('production')).toThrow('test-only')
 
 Also build the production bundle and assert that `CIRCUITGUARD_E2E_SITE_VERIFIED` is absent from `dist`.
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 Run: `cd web && npm test -- --run siteAttestation.test.ts`
 
 Expected: FAIL because the attestation boundary does not exist.
 
-- [ ] **Step 3: Implement the boundary**
+- [x] **Step 3: Implement the boundary**
 
 ```typescript
 export type SiteAttestationSource = {
@@ -316,7 +316,7 @@ export const noSiteAttestation: SiteAttestationSource = {
 
 The E2E implementation is behind `import.meta.env.MODE === 'e2e'`. Do not inspect hostname, query parameters, or mutable globals.
 
-- [ ] **Step 4: Run tests and artifact scan**
+- [x] **Step 4: Run tests and artifact scan**
 
 ```bash
 cd web && npm test -- --run siteAttestation.test.ts
@@ -326,7 +326,7 @@ rg -n 'CIRCUITGUARD_E2E_SITE_VERIFIED' web/dist
 
 Expected: tests PASS and `rg` returns no matches.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add web/src/site web/src/config/deployment.ts web/test/siteAttestation.test.ts
