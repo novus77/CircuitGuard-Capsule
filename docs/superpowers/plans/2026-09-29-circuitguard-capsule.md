@@ -806,29 +806,29 @@ git commit -m "feat: add CircuitGuard frontend domain model"
 - Create: `web/src/state/transactionJournal.ts`
 - Create: `web/test/transactionJournal.test.ts`
 
-- [ ] **Step 1: Write failing journal tests**
+- [x] **Step 1: Write failing journal tests**
 
 Test pending insertion, receipt confirmation, reverted state, persistence round-trip, duplicate-hash rejection, and refusal to start a second transaction while one is unresolved.
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 Run: `cd web && npm test -- --run transactionJournal`
 
 Expected: FAIL because the journal is missing.
 
-- [ ] **Step 3: Define minimal ABIs**
+- [x] **Step 3: Define minimal ABIs**
 
 Include only Treasury reads/writes/events, Adapter `health`, Processor `circuitInfo/netlist`, ERC-20 `balanceOf/allowance/approve`, and standard ownership/paused reads. Do not import a generated full ABI bundle into the client.
 
-- [ ] **Step 4: Implement read-only and wallet clients**
+- [x] **Step 4: Implement read-only and wallet clients**
 
 `client.ts` creates a public X Layer client with `https://rpc.xlayer.tech`, requests the wallet only after user action, switches to chain `196`, and refuses to send if wallet and public clients disagree on chain or configured contract code.
 
-- [ ] **Step 5: Implement bounded receipt polling**
+- [x] **Step 5: Implement bounded receipt polling**
 
 Journal state is `pending | confirmed | reverted`; after timeout the entry remains pending. The UI must never automatically resubmit.
 
-- [ ] **Step 6: Run tests and commit**
+- [x] **Step 6: Run tests and commit**
 
 ```bash
 cd web && npm test -- --run
