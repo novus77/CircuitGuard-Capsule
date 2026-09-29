@@ -614,7 +614,7 @@ git commit -m "feat: enforce circuit decisions on treasury transfers"
 - Create: `contracts/test/CircuitGuardInvariant.t.sol`
 - Modify: `contracts/test/CircuitGuardTreasury.t.sol`
 
-- [ ] **Step 1: Write invariants before handlers**
+- [x] **Step 1: Write invariants before handlers**
 
 Define invariants that assert:
 
@@ -628,17 +628,17 @@ assertEq(handler.executionsToBlockedRecipient(), 0);
 assertEq(handler.executionsWithoutAllow(), 0);
 ```
 
-- [ ] **Step 2: Run and observe handler/setup failures**
+- [x] **Step 2: Run and observe handler/setup failures**
 
 Run: `forge test --root contracts --match-contract CircuitGuardInvariantTest -vv`
 
 Expected: FAIL until the invariant handler is wired.
 
-- [ ] **Step 3: Implement a bounded handler**
+- [x] **Step 3: Implement a bounded handler**
 
 The handler may fund, request, approve, execute, pause, advance time, and change recipient status. Bound amounts to available balances and retain counters for forbidden executions.
 
-- [ ] **Step 4: Run fuzz and invariant suites**
+- [x] **Step 4: Run fuzz and invariant suites**
 
 Run:
 
@@ -649,13 +649,13 @@ forge test --root contracts --match-contract CircuitGuardInvariantTest --fuzz-ru
 
 Expected: all tests PASS; no invariant failure after 1,000 runs.
 
-- [ ] **Step 5: Generate coverage**
+- [x] **Step 5: Generate coverage**
 
 Run: `forge coverage --root contracts --report summary`
 
 Expected: security-critical Treasury and Adapter branches are covered; any uncovered fail-closed branch receives a targeted test before commit.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add contracts/test

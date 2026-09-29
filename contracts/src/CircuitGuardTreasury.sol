@@ -184,6 +184,7 @@ contract CircuitGuardTreasury is Ownable2Step, Pausable, ReentrancyGuard {
         _validateBudget(instantLimit, dailyLimit);
         Budget storage budget = _budgets[asset];
         _syncBudget(budget);
+        if (budget.spent > dailyLimit) revert BudgetExceeded();
         budget.instantLimit = instantLimit;
         budget.dailyLimit = dailyLimit;
         emit BudgetChanged(asset, instantLimit, dailyLimit);

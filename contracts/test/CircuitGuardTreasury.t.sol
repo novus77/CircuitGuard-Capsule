@@ -171,13 +171,11 @@ contract CircuitGuardTreasuryTest is Test {
         assertEq(afterRollover.epochDay, uint64(block.timestamp / 1 days));
     }
 
-    function test_loweredDailyLimitFailsClosedWithoutArithmeticPanic() public {
+    function test_cannotLowerDailyLimitBelowCurrentSpend() public {
         treasury.recordSpend(CircuitGuardTreasury.Asset.USDT0, 50e6);
         vm.prank(owner);
-        treasury.setBudget(CircuitGuardTreasury.Asset.USDT0, 10e6, 40e6);
-
         vm.expectRevert(CircuitGuardTreasury.BudgetExceeded.selector);
-        treasury.recordSpend(CircuitGuardTreasury.Asset.USDT0, 1);
+        treasury.setBudget(CircuitGuardTreasury.Asset.USDT0, 10e6, 40e6);
     }
 
     function test_receiveAcceptsOkbAndEmitsFunding() public {

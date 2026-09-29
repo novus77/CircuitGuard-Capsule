@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 contracts/cache/
+/cache/
 contracts/out/
 contracts/broadcast/
 contracts/lib/
