@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "nIn": 6,
+  "nOut": 2,
+  "nState": 0,
+  "nand": 13,
+  "latch": 0,
+  "netlist": "0x0000000400000400000002000008000000090000090000000a0000060000000b00000b00000003000005000000070000070000000e00000d0000000f00000f0000000c00000f0000000c0000100000001100001100000012000012",
+  "keccak256": "0xd722aa6af62aa44c485ec471d4234803c859aec19684caa2a510bdca1675c269",
+  "inputs": [
+    "systemActive",
+    "recipientTrusted",
+    "recipientBlocked",
+    "amountLow",
+    "withinDailyBudget",
+    "humanApproved"
+  ],
+  "outputs": ["allow", "review"]
+}

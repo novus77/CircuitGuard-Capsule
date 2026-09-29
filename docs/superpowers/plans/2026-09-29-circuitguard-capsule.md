@@ -95,7 +95,7 @@
 - Create: `contracts/remappings.txt`
 - Create: `web/package.json` and Vite/TypeScript bootstrap files
 
-- [ ] **Step 1: Create the Foundry workspace without a nested Git repository**
+- [x] **Step 1: Create the Foundry workspace without a nested Git repository**
 
 Run:
 
@@ -106,7 +106,7 @@ cd contracts && forge install OpenZeppelin/openzeppelin-contracts --no-git
 
 Expected: `contracts/src`, `contracts/test`, and `contracts/lib/openzeppelin-contracts` exist; repository root remains the only Git repository.
 
-- [ ] **Step 2: Pin compiler and remapping**
+- [x] **Step 2: Pin compiler and remapping**
 
 Create `contracts/foundry.toml`:
 
@@ -134,7 +134,7 @@ Create `contracts/remappings.txt`:
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 ```
 
-- [ ] **Step 3: Create the Preact workspace**
+- [x] **Step 3: Create the Preact workspace**
 
 Run:
 
@@ -149,7 +149,7 @@ npm pkg set 'scripts.test=vitest --passWithNoTests' 'scripts.test:e2e=playwright
 
 Move the generated `src/app.tsx` implementation to `src/app/App.tsx`, update `src/main.tsx` to import it, and remove the unused template assets. Expected: `npm test -- --run` exits 0 with no tests yet and `npm run build` produces a static `web/dist` directory.
 
-- [ ] **Step 4: Add root commands and ignore generated secrets/build output**
+- [x] **Step 4: Add root commands and ignore generated secrets/build output**
 
 Create `Makefile`:
 
@@ -188,7 +188,7 @@ web/playwright-report/
 web/test-results/
 ```
 
-- [ ] **Step 5: Verify the empty workspaces**
+- [x] **Step 5: Verify the empty workspaces**
 
 Run:
 
@@ -199,7 +199,7 @@ cd web && npm run build
 
 Expected: both commands exit 0.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add .gitignore Makefile contracts/foundry.toml contracts/remappings.txt contracts/src contracts/test web
@@ -213,7 +213,7 @@ git commit -m "chore: scaffold CircuitGuard workspaces"
 - Create: `circuits/test/policy.test.mjs`
 - Create: `circuits/generated/policy.json`
 
-- [ ] **Step 1: Write the exhaustive failing circuit test**
+- [x] **Step 1: Write the exhaustive failing circuit test**
 
 Create `circuits/test/policy.test.mjs`:
 
@@ -246,13 +246,13 @@ test('all 64 vectors match and never produce invalid output', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test and verify it fails**
+- [x] **Step 2: Run the test and verify it fails**
 
 Run: `node --test circuits/test/policy.test.mjs`
 
 Expected: FAIL with `ERR_MODULE_NOT_FOUND` for `circuits/src/policy.mjs`.
 
-- [ ] **Step 3: Implement the canonical graph and serializer**
+- [x] **Step 3: Implement the canonical graph and serializer**
 
 Create `circuits/src/policy.mjs`:
 
@@ -295,7 +295,7 @@ export function evaluateReference(inputByte) {
 }
 ```
 
-- [ ] **Step 4: Generate the committed policy manifest**
+- [x] **Step 4: Generate the committed policy manifest**
 
 Create `circuits/generated/policy.json`:
 
@@ -314,13 +314,13 @@ Create `circuits/generated/policy.json`:
 }
 ```
 
-- [ ] **Step 5: Run tests**
+- [x] **Step 5: Run tests**
 
 Run: `node --test circuits/test/policy.test.mjs`
 
 Expected: 2 tests PASS and report no invalid vector.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add circuits
