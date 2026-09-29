@@ -129,6 +129,52 @@ export const treasuryAbi = [
   },
   {
     type: 'event',
+    name: 'ProposalCreated',
+    anonymous: false,
+    inputs: [
+      { name: 'proposalId', type: 'uint256', indexed: true },
+      { name: 'agent', type: 'address', indexed: true },
+      { name: 'asset', type: 'uint8', indexed: true },
+      { name: 'recipient', type: 'address', indexed: false },
+      { name: 'amount', type: 'uint256', indexed: false },
+      { name: 'memoHash', type: 'bytes32', indexed: false },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'PolicyEvaluated',
+    anonymous: false,
+    inputs: [
+      { name: 'proposalId', type: 'uint256', indexed: true },
+      { name: 'inputs', type: 'uint8', indexed: false },
+      { name: 'outputs', type: 'uint8', indexed: false },
+      { name: 'decision', type: 'uint8', indexed: false },
+      { name: 'error', type: 'uint8', indexed: false },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'ProposalApproved',
+    anonymous: false,
+    inputs: [
+      { name: 'proposalId', type: 'uint256', indexed: true },
+      { name: 'approvalExpiresAt', type: 'uint64', indexed: false },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'ProposalCancelled',
+    anonymous: false,
+    inputs: [{ name: 'proposalId', type: 'uint256', indexed: true }],
+  },
+  {
+    type: 'event',
+    name: 'ProposalExpired',
+    anonymous: false,
+    inputs: [{ name: 'proposalId', type: 'uint256', indexed: true }],
+  },
+  {
+    type: 'event',
     name: 'TransferExecuted',
     anonymous: false,
     inputs: [

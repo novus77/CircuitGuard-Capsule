@@ -393,7 +393,7 @@ git commit -m "feat: track mined and final transaction evidence"
 - Create: `web/src/chain/evidence.ts`
 - Create: `web/test/evidence.test.ts`
 
-- [ ] **Step 1: Write failing event timeline tests**
+- [x] **Step 1: Write failing event timeline tests**
 
 Create decoded log fixtures out of order and with a duplicate. Assert ordering, deduplication, confirmation counts, final labels, and state conflict:
 
@@ -408,25 +408,25 @@ expect(buildProposalTimeline(logs, 120n, 12, 'Executed').at(-1)).toMatchObject({
 expect(() => buildProposalTimeline(executedLogs, 120n, 12, 'PendingReview')).toThrow('Proposal state conflicts')
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 Run: `cd web && npm test -- --run evidence.test.ts`
 
 Expected: FAIL because evidence functions are missing.
 
-- [ ] **Step 3: Add the six Treasury event ABIs**
+- [x] **Step 3: Add the six Treasury event ABIs**
 
 Add exact indexed fields for `ProposalCreated`, `PolicyEvaluated`, `ProposalApproved`, `ProposalCancelled`, `ProposalExpired`, and `TransferExecuted` from `CircuitGuardTreasury.sol`.
 
-- [ ] **Step 4: Implement event loading and pure timeline assembly**
+- [x] **Step 4: Implement event loading and pure timeline assembly**
 
 `loadProposalEvidence(client, manifest, proposalId)` scans inclusive 10,000-block windows from `deploymentBlock` to latest, queries each event with indexed `proposalId`, deduplicates `(transactionHash, logIndex)`, and calls `buildProposalTimeline`. Reject negative or zero proposal IDs and manifest blocks above the current head.
 
-- [ ] **Step 5: Run focused tests and build**
+- [x] **Step 5: Run focused tests and build**
 
 Expected: evidence tests and TypeScript build PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add web/src/chain/abis.ts web/src/chain/evidence.ts web/test/evidence.test.ts
