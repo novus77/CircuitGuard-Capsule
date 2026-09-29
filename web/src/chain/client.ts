@@ -6,15 +6,14 @@ import {
   http,
   type Address,
   type EIP1193Provider,
-  type Hash,
-  type PublicClient,
 } from 'viem'
 import {
   XLAYER_PRIMARY_RPC_URL,
   XLAYER_SECONDARY_RPC_URL,
   xLayer,
 } from '../config/xlayer'
-import { TransactionJournal, type TransactionStatus } from '../state/transactionJournal'
+
+export { waitForJournaledFinality } from './finality'
 
 export const primaryClient = createPublicClient({
   chain: xLayer,
@@ -63,26 +62,4 @@ export async function verifyExecutionContext(
   if (bytecodes.some((code) => !code || code === '0x')) {
     throw new Error('Configured contract code is missing')
   }
-}
-
-export async function waitForJournaledReceipt(
-  client: PublicClient,
-  journal: TransactionJournal,
-  hash: Hash,
-  timeoutMs = 120_000,
-): Promise<TransactionStatus> {
-  const result = await Promise.race([
-    client
-      .waitForTransactionReceipt({ hash })
-      .then((receipt) => ({ kind: 'receipt' as const, receipt }))
-      .catch(() => ({ kind: 'timeout' as const })),
-    new Promise<{ kind: 'timeout' }>((resolve) =>
-      setTimeout(() => resolve({ kind: 'timeout' }), timeoutMs),
-    ),
-  ])
-
-  if (result.kind === 'timeout') return 'pending'
-  const status = result.receipt.status === 'success' ? 'confirmed' : 'reverted'
-  journal.resolve(hash, status)
-  return status
 }

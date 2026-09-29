@@ -20,46 +20,83 @@ class MemoryStorage implements JournalStorage {
 }
 
 describe('transaction journal', () => {
-  it('inserts a pending transaction and persists it', () => {
+  it('inserts a submitted transaction and persists it', () => {
     const storage = new MemoryStorage()
     const journal = new TransactionJournal(storage)
 
-    journal.begin({ hash: HASH_A, label: 'Request transfer', createdAt: 100 })
+    journal.begin({
+      hash: HASH_A,
+      label: 'Request transfer',
+      submittedAt: 100,
+      requiredConfirmations: 12,
+    })
 
     expect(journal.entries()).toEqual([
-      { hash: HASH_A, label: 'Request transfer', status: 'pending', createdAt: 100 },
+      {
+        hash: HASH_A,
+        label: 'Request transfer',
+        status: 'submitted',
+        submittedAt: 100,
+        confirmations: 0,
+        requiredConfirmations: 12,
+        reorgDetected: false,
+      },
     ])
     expect(new TransactionJournal(storage).entries()).toEqual(journal.entries())
   })
 
-  it('marks receipts confirmed or reverted', () => {
-    const journal = new TransactionJournal(new MemoryStorage())
-    journal.begin({ hash: HASH_A, label: 'First', createdAt: 100 })
-    journal.resolve(HASH_A, 'confirmed')
-    journal.begin({ hash: HASH_B, label: 'Second', createdAt: 200 })
-    journal.resolve(HASH_B, 'reverted')
+  it('updates mined evidence and terminal states', () => {
+    const storage = new MemoryStorage()
+    const journal = new TransactionJournal(storage)
+    journal.begin({ hash: HASH_A, label: 'First', submittedAt: 100, requiredConfirmations: 12 })
+    journal.update({
+      ...journal.entries()[0],
+      status: 'mined',
+      blockNumber: 100n,
+      blockHash: HASH_B,
+      confirmations: 6,
+    })
 
-    expect(journal.entries().map(({ status }) => status)).toEqual(['confirmed', 'reverted'])
+    expect(journal.unresolved()?.status).toBe('mined')
+    expect(new TransactionJournal(storage).entries()).toEqual(journal.entries())
   })
 
-  it('rejects duplicate hashes and concurrent pending transactions', () => {
+  it('rejects duplicate hashes and concurrent unresolved transactions', () => {
     const journal = new TransactionJournal(new MemoryStorage())
-    journal.begin({ hash: HASH_A, label: 'First', createdAt: 100 })
+    journal.begin({ hash: HASH_A, label: 'First', submittedAt: 100, requiredConfirmations: 12 })
 
     expect(() =>
-      journal.begin({ hash: HASH_A, label: 'Duplicate', createdAt: 200 }),
+      journal.begin({
+        hash: HASH_A,
+        label: 'Duplicate',
+        submittedAt: 200,
+        requiredConfirmations: 12,
+      }),
     ).toThrow('already exists')
-    expect(() => journal.begin({ hash: HASH_B, label: 'Second', createdAt: 200 })).toThrow(
-      'pending transaction',
-    )
+    expect(() =>
+      journal.begin({
+        hash: HASH_B,
+        label: 'Second',
+        submittedAt: 200,
+        requiredConfirmations: 12,
+      }),
+    ).toThrow('unresolved transaction')
   })
 
-  it('keeps a timed-out transaction pending until a receipt is observed', () => {
-    const journal = new TransactionJournal(new MemoryStorage())
-    journal.begin({ hash: HASH_A, label: 'Request transfer', createdAt: 100 })
+  it('migrates valid V1 entries into V2 once', () => {
+    const storage = new MemoryStorage()
+    storage.setItem(
+      'circuitguard.transactions.v1',
+      JSON.stringify([
+        { hash: HASH_A, label: 'Pending', status: 'pending', createdAt: 100 },
+        { hash: HASH_B, label: 'Confirmed', status: 'confirmed', createdAt: 200 },
+      ]),
+    )
 
-    expect(journal.pending()?.hash).toBe(HASH_A)
-    expect(journal.entries()[0].status).toBe('pending')
+    const journal = new TransactionJournal(storage)
+
+    expect(journal.entries().map(({ status }) => status)).toEqual(['submitted', 'final'])
+    expect(new TransactionJournal(storage).entries()).toEqual(journal.entries())
   })
 
   it('ignores malformed persisted data without inventing entries', () => {

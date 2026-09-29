@@ -342,7 +342,7 @@ git commit -m "feat: add strict TapeKit attestation boundary"
 - Create: `web/test/finality.test.ts`
 - Modify: `web/src/chain/client.ts`
 
-- [ ] **Step 1: Write failing journal and finality tests**
+- [x] **Step 1: Write failing journal and finality tests**
 
 Cover migration and every state transition:
 
@@ -361,25 +361,25 @@ expect(deriveFinality(submitted, revertedReceipt, 100n, 12)).toMatchObject({ sta
 
 Persisted V1 `pending` becomes V2 `submitted`; V1 `confirmed` becomes V2 `final`.
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 Run: `cd web && npm test -- --run transactionJournal.test.ts finality.test.ts`
 
 Expected: FAIL on missing statuses and finality functions.
 
-- [ ] **Step 3: Implement V2 journal entries**
+- [x] **Step 3: Implement V2 journal entries**
 
 Use storage key `circuitguard.transactions.v2`, read V2 first, and migrate valid V1 entries once. `unresolved()` returns `submitted` or `mined`. `update(evidence)` replaces the matching entry while preserving a maximum of 30 entries.
 
-- [ ] **Step 4: Implement bounded finality polling**
+- [x] **Step 4: Implement bounded finality polling**
 
 `waitForJournaledFinality(client, journal, hash, requiredConfirmations, timeoutMs)` repeatedly reads receipt and latest block, updates the journal on each state change, and exits on `final`, `reverted`, or timeout. It never resubmits. Poll interval remains bounded and injectable for tests.
 
-- [ ] **Step 5: Run focused and existing tests**
+- [x] **Step 5: Run focused and existing tests**
 
 Expected: journal, finality, client, and all existing frontend tests PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add web/src/state/transactionJournal.ts web/src/chain/finality.ts web/src/chain/client.ts web/test/transactionJournal.test.ts web/test/finality.test.ts

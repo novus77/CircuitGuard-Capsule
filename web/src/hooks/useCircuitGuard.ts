@@ -12,7 +12,7 @@ import {
   connectWallet,
   primaryClient,
   verifyExecutionContext,
-  waitForJournaledReceipt,
+  waitForJournaledFinality,
 } from '../chain/client'
 import { deploymentManifest as deployment } from '../config/deployment'
 import { formatAssetAmount, parseAssetAmount, type Asset } from '../domain/amount'
@@ -251,11 +251,11 @@ export function useCircuitGuard(): {
 
   const send = useCallback(
     async (label: string, write: (walletClient: ConnectedWallet) => Promise<Hash>) => {
-      if (!wallet || !deployment.treasury || !deployment.adapter) {
+      if (!wallet || deployment.status !== 'deployed') {
         throw new Error('Connect a wallet after deployment is available')
       }
       const journal = new TransactionJournal(window.localStorage)
-      if (journal.pending()) throw new Error('A transaction is still pending')
+      if (journal.unresolved()) throw new Error('A transaction is still unresolved')
 
       setModel((current) => ({ ...current, pending: true, error: undefined }))
       try {
@@ -264,9 +264,19 @@ export function useCircuitGuard(): {
           getAddress(deployment.adapter),
         ])
         const hash = await write(wallet)
-        journal.begin({ hash, label, createdAt: Date.now() })
-        const status = await waitForJournaledReceipt(primaryClient, journal, hash)
-        if (status === 'reverted') throw new Error(`${label} reverted`)
+        journal.begin({
+          hash,
+          label,
+          submittedAt: Date.now(),
+          requiredConfirmations: deployment.safeConfirmations,
+        })
+        const evidence = await waitForJournaledFinality(
+          primaryClient,
+          journal,
+          hash,
+          deployment.safeConfirmations,
+        )
+        if (evidence.status === 'reverted') throw new Error(`${label} reverted`)
         await refresh()
       } catch (error) {
         setModel((current) => ({
@@ -275,7 +285,7 @@ export function useCircuitGuard(): {
         }))
         throw error
       } finally {
-        const pending = new TransactionJournal(window.localStorage).pending() !== undefined
+        const pending = new TransactionJournal(window.localStorage).unresolved() !== undefined
         setModel((current) => ({ ...current, pending }))
       }
     },
