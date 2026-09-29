@@ -40,6 +40,24 @@ const baseModel: CircuitGuardModel = {
   policyError: 'None',
   proposalState: 'Executed',
   pending: false,
+  trustEnvelope: {
+    coordinate: '196:0x2222222222222222222222222222222222222222',
+    site: { status: 'verified', summary: 'Site verified' },
+    policy: { status: 'verified', summary: 'Policy verified' },
+    execution: { status: 'verified', summary: 'Execution verified' },
+    overall: 'verified',
+    signingEnabled: false,
+  },
+  signingDisabledReason: 'Connect an X Layer wallet to sign.',
+  transactionEvidence: undefined,
+  proposalEvidence: [],
+}
+
+const connectedModel: CircuitGuardModel = {
+  ...baseModel,
+  walletStatus: 'connected',
+  trustEnvelope: { ...baseModel.trustEnvelope, signingEnabled: true },
+  signingDisabledReason: undefined,
 }
 
 const actions = (): CircuitGuardActions => ({
@@ -56,6 +74,10 @@ describe('CircuitGuard dashboard', () => {
     render(<Dashboard model={baseModel} actions={actions()} />)
 
     expect(screen.getByText('X Layer · 196')).toBeInTheDocument()
+    expect(
+      screen.getByText('196:0x2222222222222222222222222222222222222222'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Endpoint verified')).toBeInTheDocument()
     expect(screen.getByText('0.5 OKB')).toBeInTheDocument()
     expect(screen.getByText('250 USDT0')).toBeInTheDocument()
     ;[
@@ -122,7 +144,7 @@ describe('CircuitGuard dashboard', () => {
     const callbacks = actions()
     render(
       <Dashboard
-        model={{ ...baseModel, walletStatus: 'connected' }}
+        model={connectedModel}
         actions={callbacks}
       />,
     )
@@ -136,5 +158,24 @@ describe('CircuitGuard dashboard', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Confirm & request' }))
     expect(callbacks.requestTransfer).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps an unattested Site read-only and explains why', () => {
+    const detail = 'Open this deployment with a verified TapeKit client to enable signing.'
+    const model: CircuitGuardModel = {
+      ...connectedModel,
+      trustEnvelope: {
+        ...connectedModel.trustEnvelope,
+        site: { status: 'unverified', summary: 'Site unverified', detail },
+        overall: 'unverified',
+        signingEnabled: false,
+      },
+      signingDisabledReason: detail,
+    }
+
+    render(<Dashboard model={model} actions={actions()} />)
+
+    expect(screen.getByRole('button', { name: 'Preview transfer' })).toBeDisabled()
+    expect(screen.getByText(detail)).toBeInTheDocument()
   })
 })

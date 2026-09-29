@@ -22,7 +22,7 @@ export function CircuitDecision({
   const [loadError, setLoadError] = useState<string>()
   const parsedId = /^\d+$/.test(proposalId) ? BigInt(proposalId) : 0n
   const invalidId = parsedId === 0n
-  const disabled = model.pending || invalidId || model.walletStatus !== 'connected'
+  const disabled = !model.trustEnvelope.signingEnabled || invalidId
 
   const loadProposal = async () => {
     setLoadError(undefined)

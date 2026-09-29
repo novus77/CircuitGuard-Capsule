@@ -4,8 +4,11 @@ import {
   custom,
   getAddress,
   http,
+  keccak256,
   type Address,
   type EIP1193Provider,
+  type Hash,
+  type Hex,
 } from 'viem'
 import {
   XLAYER_PRIMARY_RPC_URL,
@@ -46,7 +49,7 @@ export async function connectWallet(provider: EIP1193Provider) {
 
 export async function verifyExecutionContext(
   walletClient: ReturnType<typeof createWalletClient>,
-  contractAddresses: readonly Address[],
+  contracts: readonly { address: Address; codeHash: Hash }[],
 ): Promise<void> {
   const [publicChainId, walletChainId] = await Promise.all([
     primaryClient.getChainId(),
@@ -57,9 +60,16 @@ export async function verifyExecutionContext(
   }
 
   const bytecodes = await Promise.all(
-    contractAddresses.map((address) => primaryClient.getCode({ address })),
+    contracts.map(async ({ address }) =>
+      walletClient.request({ method: 'eth_getCode', params: [address, 'latest'] }) as Promise<Hex>,
+    ),
   )
-  if (bytecodes.some((code) => !code || code === '0x')) {
-    throw new Error('Configured contract code is missing')
+  for (const [index, code] of bytecodes.entries()) {
+    if (!code || code === '0x') {
+      throw new Error(`Wallet RPC reports missing code at ${contracts[index].address}`)
+    }
+    if (keccak256(code).toLowerCase() !== contracts[index].codeHash.toLowerCase()) {
+      throw new Error(`Wallet RPC code hash mismatch at ${contracts[index].address}`)
+    }
   }
 }

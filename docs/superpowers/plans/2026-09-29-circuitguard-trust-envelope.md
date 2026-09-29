@@ -440,7 +440,7 @@ git commit -m "feat: reconstruct proposal evidence from chain logs"
 - Modify: `web/src/app/App.tsx`
 - Modify: `web/test/app.test.tsx`
 
-- [ ] **Step 1: Extend failing component-model tests**
+- [x] **Step 1: Extend failing component-model tests**
 
 Add `trustEnvelope`, `signingDisabledReason`, `transactionEvidence`, and `proposalEvidence` to the fixture. Assert:
 
@@ -453,13 +453,13 @@ expect(screen.getByText('Open this deployment with a verified TapeKit client to 
 
 Use separate verified and unverified fixtures so the existing wallet-flow tests remain explicit.
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 Run: `cd web && npm test -- --run app.test.tsx`
 
 Expected: FAIL because the model and components do not expose Trust Envelope data.
 
-- [ ] **Step 3: Refactor hook orchestration**
+- [x] **Step 3: Refactor hook orchestration**
 
 On mount, `useCircuitGuard`:
 
@@ -471,15 +471,15 @@ On mount, `useCircuitGuard`:
 
 All write actions call a shared preflight that rechecks envelope status, wallet chain, and wallet-visible code hashes. `loadProposal` fetches both contract state and event evidence. A blocked result calls `clearChainReads` and preserves only immutable diagnostic fields.
 
-- [ ] **Step 4: Replace receipt waiting with finality tracking**
+- [x] **Step 4: Replace receipt waiting with finality tracking**
 
 After transaction submission, begin the V2 journal, call `waitForJournaledFinality`, refresh dynamic state at `mined`, and expose depth until `final`. Never clear `pending` while the journal reports an unresolved entry.
 
-- [ ] **Step 5: Run all frontend tests and build**
+- [x] **Step 5: Run all frontend tests and build**
 
 Expected: tests and TypeScript build PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add web/src/hooks/useCircuitGuard.ts web/src/app/App.tsx web/test/app.test.tsx

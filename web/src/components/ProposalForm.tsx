@@ -17,7 +17,7 @@ export function ProposalForm({
   const [error, setError] = useState<string>()
   const [preview, setPreview] = useState(false)
 
-  const disabled = model.pending || model.status !== 'ready' || model.walletStatus !== 'connected'
+  const disabled = !model.trustEnvelope.signingEnabled
 
   const submit = async (event: Event) => {
     event.preventDefault()
@@ -53,7 +53,12 @@ export function ProposalForm({
         <label class="wide">Memo (hashed on submit)<input value={memo} onInput={(event) => { setMemo(event.currentTarget.value); setPreview(false) }} /></label>
         {preview && <div class="transfer-preview" role="status"><strong>Review request</strong><span>{amount} {asset}</span><code>{recipient}</code><small>Submitting creates an immutable on-chain proposal.</small></div>}
         {error && <p class="form-error">{error}</p>}
-        <button class="primary-action" type="submit" disabled={disabled}>
+        <button
+          class="primary-action"
+          type="submit"
+          disabled={disabled}
+          title={disabled ? model.signingDisabledReason : undefined}
+        >
           {model.pending ? 'Transaction pending' : preview ? 'Confirm & request' : 'Preview transfer'}
         </button>
       </form>

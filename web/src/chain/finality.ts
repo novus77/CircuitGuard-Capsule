@@ -75,10 +75,11 @@ export const deriveFinality = (
   }
 }
 
-type PollOptions = {
+export type FinalityPollOptions = {
   pollIntervalMs?: number
   now?: () => number
   sleep?: (milliseconds: number) => Promise<void>
+  onUpdate?: (evidence: TransactionEvidence) => void | Promise<void>
 }
 
 const defaultSleep = (milliseconds: number): Promise<void> =>
@@ -90,7 +91,7 @@ export const waitForJournaledFinality = async (
   hash: Hash,
   requiredConfirmations: number,
   timeoutMs = 120_000,
-  options: PollOptions = {},
+  options: FinalityPollOptions = {},
 ): Promise<TransactionEvidence> => {
   const pollIntervalMs = Math.max(100, options.pollIntervalMs ?? 1_000)
   const now = options.now ?? Date.now
@@ -109,6 +110,7 @@ export const waitForJournaledFinality = async (
     ])
     const next = deriveFinality(previous, receipt, latestBlock, requiredConfirmations)
     journal.update(next)
+    await options.onUpdate?.(next)
 
     if (next.status === 'final' || next.status === 'reverted' || now() - startedAt >= timeoutMs) {
       return next
