@@ -1,6 +1,7 @@
 import { CircuitDecision } from '../components/CircuitDecision'
 import { ProposalForm } from '../components/ProposalForm'
 import { TreasuryPanel } from '../components/TreasuryPanel'
+import { TrustEnvelopePanel } from '../components/TrustEnvelopePanel'
 import { VerificationBar } from '../components/VerificationBar'
 import {
   useCircuitGuard,
@@ -35,11 +36,7 @@ export function Dashboard({
           <strong>Experimental prototype</strong>
           <span>Limited demo funds only. Owner recovery bypasses the policy circuit, and current TapeOut infrastructure is not independently audited or sealed.</span>
         </aside>
-        <section class="endpoint-summary" aria-label="Endpoint trust summary">
-          <strong>Endpoint {model.trustEnvelope.overall}</strong>
-          <code>{model.trustEnvelope.coordinate}</code>
-          {model.signingDisabledReason && <p>{model.signingDisabledReason}</p>}
-        </section>
+        <TrustEnvelopePanel model={model} />
         {model.status === 'unavailable' && (
           <section class="deployment-empty">
             <span class="eyebrow">Local build ready</span>

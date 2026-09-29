@@ -498,7 +498,7 @@ git commit -m "feat: enforce Trust Envelope signing gate"
 - Modify: `web/src/styles.css`
 - Modify: `web/test/app.test.tsx`
 
-- [ ] **Step 1: Write failing accessibility and state tests**
+- [x] **Step 1: Write failing accessibility and state tests**
 
 Assert all status text is available without color, technical details are expandable, disabled actions expose their reason, and timeline entries show depth:
 
@@ -511,23 +511,23 @@ expect(screen.getByText('Mined · 6/12 confirmations')).toBeInTheDocument()
 expect(screen.getByText('Final · 12/12 confirmations')).toBeInTheDocument()
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 Run: `cd web && npm test -- --run app.test.tsx`
 
 Expected: FAIL on missing Trust and timeline components.
 
-- [ ] **Step 3: Implement the UI components**
+- [x] **Step 3: Implement the UI components**
 
 `TrustEnvelopePanel` renders three cards with status, summary, details, and verified block. `EvidenceTimeline` renders semantic ordered-list items. `VerificationBar` shows the coordinate and overall state; full addresses move into the Trust detail sections.
 
 All transaction buttons use `model.trustEnvelope.signingEnabled`. Native `title` and visible helper text explain the disabled reason. Loading and blocked states do not animate indefinitely.
 
-- [ ] **Step 4: Implement responsive styling**
+- [x] **Step 4: Implement responsive styling**
 
 Desktop uses a three-card Trust row; below 760px it becomes one column. Preserve the dark circuit-grid visual system, existing focus indicators, and minimum 44px interactive targets. Avoid remote fonts and images.
 
-- [ ] **Step 5: Test, build, and visually inspect**
+- [x] **Step 5: Test, build, and visually inspect**
 
 ```bash
 cd web && npm test -- --run
@@ -538,7 +538,7 @@ rg -n 'fonts\.googleapis|googletagmanager|cdn\.|api[_-]?key' web/dist
 
 Expected: all tests and build PASS; both scans print nothing. Inspect verified, unverified, degraded, and blocked screens at desktop and mobile widths.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add web/src/components web/src/app/App.tsx web/src/styles.css web/test/app.test.tsx

@@ -51,13 +51,17 @@ export function ProposalForm({
         <label class="wide">Recipient<input value={recipient} placeholder="0x…" onInput={(event) => { setRecipient(event.currentTarget.value); setPreview(false) }} /></label>
         <label>Amount<input inputMode="decimal" value={amount} onInput={(event) => { setAmount(event.currentTarget.value); setPreview(false) }} /></label>
         <label class="wide">Memo (hashed on submit)<input value={memo} onInput={(event) => { setMemo(event.currentTarget.value); setPreview(false) }} /></label>
-        {preview && <div class="transfer-preview" role="status"><strong>Review request</strong><span>{amount} {asset}</span><code>{recipient}</code><small>Submitting creates an immutable on-chain proposal.</small></div>}
-        {error && <p class="form-error">{error}</p>}
+        {preview && <div class="transfer-preview" role="status" aria-label="Transfer preview"><strong>Review request</strong><span>{amount} {asset}</span><code>{recipient}</code><small>Submitting creates an immutable on-chain proposal.</small></div>}
+        {error && <p class="form-error" role="alert">{error}</p>}
+        {disabled && model.signingDisabledReason && (
+          <p class="signing-helper" id="signing-disabled-reason">Signing disabled: {model.signingDisabledReason}</p>
+        )}
         <button
           class="primary-action"
           type="submit"
           disabled={disabled}
           title={disabled ? model.signingDisabledReason : undefined}
+          aria-describedby={disabled ? 'signing-disabled-reason' : undefined}
         >
           {model.pending ? 'Transaction pending' : preview ? 'Confirm & request' : 'Preview transfer'}
         </button>

@@ -42,15 +42,40 @@ const baseModel: CircuitGuardModel = {
   pending: false,
   trustEnvelope: {
     coordinate: '196:0x2222222222222222222222222222222222222222',
-    site: { status: 'verified', summary: 'Site verified' },
-    policy: { status: 'verified', summary: 'Policy verified' },
-    execution: { status: 'verified', summary: 'Execution verified' },
+    site: { status: 'verified', summary: 'Site verified', detail: 'Site detail' },
+    policy: { status: 'verified', summary: 'Policy verified', detail: 'Policy detail' },
+    execution: {
+      status: 'verified',
+      summary: 'Execution verified',
+      detail: 'Execution detail',
+    },
     overall: 'verified',
     signingEnabled: false,
   },
   signingDisabledReason: 'Connect an X Layer wallet to sign.',
-  transactionEvidence: undefined,
-  proposalEvidence: [],
+  transactionEvidence: {
+    hash: `0x${'a'.repeat(64)}`,
+    label: 'Request transfer',
+    status: 'mined',
+    submittedAt: 100,
+    blockNumber: 100n,
+    blockHash: `0x${'b'.repeat(64)}`,
+    confirmations: 6,
+    requiredConfirmations: 12,
+    reorgDetected: false,
+  },
+  proposalEvidence: [
+    {
+      kind: 'executed',
+      proposalId: 1n,
+      transactionHash: `0x${'c'.repeat(64)}`,
+      blockNumber: 90n,
+      logIndex: 1,
+      confirmations: 12,
+      requiredConfirmations: 12,
+      final: true,
+    },
+  ],
 }
 
 const connectedModel: CircuitGuardModel = {
@@ -78,6 +103,15 @@ describe('CircuitGuard dashboard', () => {
       screen.getByText('196:0x2222222222222222222222222222222222222222'),
     ).toBeInTheDocument()
     expect(screen.getByText('Endpoint verified')).toBeInTheDocument()
+    expect(screen.getByRole('status', { name: 'Endpoint verification' })).toHaveTextContent(
+      'Verified',
+    )
+    expect(screen.getByText('Site verified')).toBeInTheDocument()
+    expect(screen.getByText('Policy verified')).toBeInTheDocument()
+    expect(screen.getByText('Execution verified')).toBeInTheDocument()
+    expect(screen.getByText('Mined · 6/12 confirmations')).toBeInTheDocument()
+    expect(screen.getByText('Final · 12/12 confirmations')).toBeInTheDocument()
+    expect(screen.getByText('Site detail').closest('details')).toBeInTheDocument()
     expect(screen.getByText('0.5 OKB')).toBeInTheDocument()
     expect(screen.getByText('250 USDT0')).toBeInTheDocument()
     ;[
@@ -154,7 +188,7 @@ describe('CircuitGuard dashboard', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Preview transfer' }))
     expect(callbacks.requestTransfer).not.toHaveBeenCalled()
-    expect(screen.getByRole('status')).toHaveTextContent('3 USDT0')
+    expect(screen.getByRole('status', { name: 'Transfer preview' })).toHaveTextContent('3 USDT0')
 
     fireEvent.click(screen.getByRole('button', { name: 'Confirm & request' }))
     expect(callbacks.requestTransfer).toHaveBeenCalledTimes(1)
@@ -176,6 +210,10 @@ describe('CircuitGuard dashboard', () => {
     render(<Dashboard model={model} actions={actions()} />)
 
     expect(screen.getByRole('button', { name: 'Preview transfer' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Preview transfer' })).toHaveAttribute(
+      'title',
+      detail,
+    )
     expect(screen.getByText(detail)).toBeInTheDocument()
   })
 })

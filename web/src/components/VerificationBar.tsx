@@ -9,13 +9,8 @@ const compact = (value: string) =>
   value.startsWith('0x') && value.length > 18 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value
 
 export function VerificationBar({ model, onConnect }: Props) {
-  const items = [
-    ['Processor', model.verification.processor],
-    ['Circuit', `#${model.verification.circuitId}`],
-    ['Container', model.verification.container],
-    ['Adapter', model.verification.adapter],
-    ['Treasury', model.verification.treasury],
-  ]
+  const statusLabel = model.trustEnvelope.overall.charAt(0).toUpperCase()
+    + model.trustEnvelope.overall.slice(1)
 
   return (
     <header class="verification-bar">
@@ -28,13 +23,23 @@ export function VerificationBar({ model, onConnect }: Props) {
       </div>
       <div class="verification-items" aria-label="Deployment verification">
         <span class="chain-chip"><i />{model.verification.chain}</span>
-        {items.map(([label, value]) => (
-          <span class="verification-item" title={value} key={label}>
-            <small>{label}</small>{compact(value)}
-          </span>
-        ))}
+        <code class="endpoint-coordinate">{model.trustEnvelope.coordinate}</code>
+        <div
+          class={`endpoint-status ${model.trustEnvelope.overall}`}
+          role="status"
+          aria-label="Endpoint verification"
+        >
+          <span>Endpoint {model.trustEnvelope.overall}</span>
+          <strong>{statusLabel}</strong>
+        </div>
       </div>
-      <button class="wallet-button" type="button" onClick={onConnect}>
+      <button
+        class="wallet-button"
+        type="button"
+        disabled={model.walletStatus === 'connecting'}
+        aria-busy={model.walletStatus === 'connecting'}
+        onClick={onConnect}
+      >
         {model.walletStatus === 'connected'
           ? compact(model.walletAddress ?? 'Connected')
           : model.walletStatus === 'connecting'

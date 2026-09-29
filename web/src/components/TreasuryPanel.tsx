@@ -14,7 +14,7 @@ export function TreasuryPanel({ model }: { model: CircuitGuardModel }) {
           const snapshot = model.assets[asset]
           return (
             <article class="asset-card" key={asset}>
-              <div class="asset-title"><span>{asset === 'OKB' ? '◈' : '$'}</span>{asset}</div>
+              <div class="asset-title"><span aria-hidden="true">{asset === 'OKB' ? '◈' : '$'}</span>{asset}</div>
               <strong>{snapshot.balance} {asset}</strong>
               <dl>
                 <div><dt>Instant</dt><dd>{snapshot.instantLimit}</dd></div>

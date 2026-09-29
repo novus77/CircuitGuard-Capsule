@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks'
 import type { PolicyFacts } from '../domain/policy'
 import type { CircuitGuardActions, CircuitGuardModel } from '../hooks/useCircuitGuard'
+import { EvidenceTimeline } from './EvidenceTimeline'
 
 const facts: Array<[keyof PolicyFacts, string]> = [
   ['systemActive', 'System active'],
@@ -23,6 +24,7 @@ export function CircuitDecision({
   const parsedId = /^\d+$/.test(proposalId) ? BigInt(proposalId) : 0n
   const invalidId = parsedId === 0n
   const disabled = !model.trustEnvelope.signingEnabled || invalidId
+  const disabledReason = invalidId ? 'Enter a valid Proposal ID.' : model.signingDisabledReason
 
   const loadProposal = async () => {
     setLoadError(undefined)
@@ -57,13 +59,14 @@ export function CircuitDecision({
       <div class="proposal-actions">
         <label>Proposal ID<input inputMode="numeric" value={proposalId} onInput={(event) => setProposalId(event.currentTarget.value)} /></label>
         <button type="button" disabled={model.pending || invalidId || model.status !== 'ready'} onClick={() => void loadProposal()}>Load evidence</button>
-        <button type="button" disabled={disabled} onClick={() => void actions.approveProposal(parsedId)}>Approve 10 minutes</button>
+        <button type="button" disabled={disabled} title={disabled ? disabledReason : undefined} aria-describedby={!invalidId && disabled ? 'signing-disabled-reason' : undefined} onClick={() => void actions.approveProposal(parsedId)}>Approve 10 minutes</button>
         {model.decision !== 'DENY' && (
-          <button type="button" disabled={disabled} onClick={() => void actions.executeApproved(parsedId)}>Execute approved</button>
+          <button type="button" disabled={disabled} title={disabled ? disabledReason : undefined} aria-describedby={!invalidId && disabled ? 'signing-disabled-reason' : undefined} onClick={() => void actions.executeApproved(parsedId)}>Execute approved</button>
         )}
-        <button type="button" disabled={disabled} onClick={() => void actions.cancelProposal(parsedId)}>Cancel proposal</button>
+        <button type="button" disabled={disabled} title={disabled ? disabledReason : undefined} aria-describedby={!invalidId && disabled ? 'signing-disabled-reason' : undefined} onClick={() => void actions.cancelProposal(parsedId)}>Cancel proposal</button>
       </div>
       {loadError && <p class="form-error">{loadError}</p>}
+      <EvidenceTimeline model={model} />
     </section>
   )
 }
