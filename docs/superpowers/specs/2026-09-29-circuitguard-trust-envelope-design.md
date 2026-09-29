@@ -74,12 +74,6 @@ The human-readable coordinate is:
 <chainId>:<checksummedContainerAddress>
 ```
 
-For example:
-
-```text
-196:0x1234...ABCD
-```
-
 This is a CircuitGuard display coordinate, not a claim of compatibility with an unpublished binary TapeUP endpoint encoding. The coordinate binds a deployment record containing:
 
 - chain ID;
@@ -364,7 +358,7 @@ The timeline does not imply that a `REVIEW` decision has executed. Approval and 
 | `containerCodeHash` | Keccak-256 of Container runtime bytecode |
 | `adapterCodeHash` | Keccak-256 of Adapter runtime bytecode |
 | `treasuryCodeHash` | Keccak-256 of Treasury runtime bytecode |
-| `siteManifestHash` | Keccak-256 of the deterministic Site manifest bytes |
+| `site` | `{ "status": "unpublished" }` after Task 13, or `{ "status": "published", "manifestHash": <32-byte hash> }` after Task 14 |
 
 The manifest generator requires:
 
@@ -372,10 +366,10 @@ The manifest generator requires:
 - integer `safeConfirmations` between 1 and 256;
 - coordinate equal to `chainId + ':' + checksummed container`;
 - 32-byte hashes for every code and Site fingerprint;
-- hashes recomputed from both configured RPC clients before release;
-- `siteManifestHash` only after deterministic Site manifest generation.
+- contract hashes recomputed from both configured RPC clients before release;
+- a published Site record only after deterministic Site manifest generation and byte-for-byte readback.
 
-The current `not-deployed` manifest stays minimal and renders the existing unavailable state.
+The current `not-deployed` manifest stays minimal and renders the existing unavailable state. A deployed but unpublished manifest is valid for Task 13 and necessarily classifies the Site layer as `UNVERIFIED`. Task 14 atomically replaces the Site record with the published form after verification; it never inserts an empty or fabricated Site hash.
 
 ## 11. Error handling
 
