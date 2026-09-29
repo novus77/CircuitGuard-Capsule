@@ -648,9 +648,9 @@ The exact Solidity representation of return structs may be flattened if required
 
 ### 8.14 Demo Merchant
 
-`DemoMerchant` is not part of the security boundary. It accepts OKB and USDT0 payments and emits a human-readable order event so the demo can prove that funds reached the intended service endpoint.
+`DemoMerchant` is not part of the security boundary. Its payable native-token entry point emits a human-readable order event for OKB payments. Standard ERC-20 transfers do not invoke a recipient callback, so USDT0 delivery is proven instead by the Treasury's `TransferExecuted` event, the token's `Transfer` event, and the merchant's before/after token balance.
 
-It must not call back into the Treasury, hold privileged roles, or be required for ordinary recipient payments. The reentrancy test suite includes a separate malicious recipient contract rather than adding adversarial behavior to `DemoMerchant`.
+It exposes read-only balance helpers for the demo, but must not call back into the Treasury, hold privileged roles, or be required for ordinary recipient payments. The reentrancy test suite includes a separate malicious recipient contract rather than adding adversarial behavior to `DemoMerchant`.
 
 ## 9. Proposal State Machine
 
