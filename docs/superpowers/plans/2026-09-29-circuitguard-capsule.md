@@ -748,17 +748,17 @@ git commit -m "feat: add quote-first X Layer deployment scripts"
 - Create: `web/test/policy.test.ts`
 - Create: `web/test/amount.test.ts`
 
-- [ ] **Step 1: Write failing policy and amount tests**
+- [x] **Step 1: Write failing policy and amount tests**
 
 Assert the same bit layout as Solidity, decision decoding, strict decimal parsing, no exponent notation, no negative values, maximum 6 decimals for USDT0, and maximum 18 decimals for OKB.
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 Run: `cd web && npm test -- --run`
 
 Expected: FAIL because domain modules are missing.
 
-- [ ] **Step 3: Implement policy encoding**
+- [x] **Step 3: Implement policy encoding**
 
 ```typescript
 export type PolicyFacts = {
@@ -782,15 +782,15 @@ export const decodeDecision = (value: number) =>
   value === 0 ? 'DENY' : value === 1 ? 'ALLOW' : value === 2 ? 'REVIEW' : 'INVALID';
 ```
 
-- [ ] **Step 4: Implement strict amount parsing with viem**
+- [x] **Step 4: Implement strict amount parsing with viem**
 
 Use `parseUnits` only after validating `/^(0|[1-9]\d*)(\.\d+)?$/`, rejecting excess fractional digits and zero. Export `parseAssetAmount(asset, text)` and `formatAssetAmount(asset, value)`.
 
-- [ ] **Step 5: Add a non-deployed generated manifest**
+- [x] **Step 5: Add a non-deployed generated manifest**
 
 Mirror `deployments/xlayer.json` into `web/src/generated/deployment.json`; the app must render an explicit “not deployed” state rather than invented addresses.
 
-- [ ] **Step 6: Run tests and commit**
+- [x] **Step 6: Run tests and commit**
 
 ```bash
 cd web && npm test -- --run
