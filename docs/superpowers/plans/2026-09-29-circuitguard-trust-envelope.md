@@ -552,7 +552,7 @@ git commit -m "feat: present verifiable endpoint and evidence timeline"
 - Create: `scripts/build-deployment-manifest.test.mjs`
 - Modify: `Makefile`
 
-- [ ] **Step 1: Write failing manifest tests**
+- [x] **Step 1: Write failing manifest tests**
 
 Use temporary directories and assert acceptance of complete unpublished and published manifests plus rejection of each missing or malformed field:
 
@@ -567,19 +567,19 @@ assert.throws(() => validateDeployment({ ...valid, site: { status: 'published' }
 assert.equal(validateDeployment(valid), valid)
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 Run: `node --test scripts/build-deployment-manifest.test.mjs`
 
 Expected: FAIL because the additional fields are not validated.
 
-- [ ] **Step 3: Add exact validation**
+- [x] **Step 3: Add exact validation**
 
 Validate positive `deploymentBlock`, confirmation range 1–256, exact coordinate derivation, four contract code hashes, the two-stage Site record, and existing addresses/transactions. A published Site record requires its 32-byte manifest hash; an unpublished record forbids that field. Preserve atomic output replacement. The `not-deployed` source remains hand-maintained and is never passed as a successful deployed manifest.
 
 Before writing, `verifyDeploymentEvidence` invokes `cast` against both official RPC URLs to verify chain ID, Factory registration, Circuit metadata, canonical netlist hash, non-empty runtime code, and all four code hashes. The command runner is injected in tests so no unit test uses the network. A mismatch or unavailable secondary RPC exits non-zero and leaves the previous generated file untouched.
 
-- [ ] **Step 4: Add manifest tests to root verification**
+- [x] **Step 4: Add manifest tests to root verification**
 
 Add a `test-manifest` target and include it in `make test`:
 
@@ -590,7 +590,7 @@ test-manifest:
 	node --test scripts/build-deployment-manifest.test.mjs
 ```
 
-- [ ] **Step 5: Run tests and commit**
+- [x] **Step 5: Run tests and commit**
 
 ```bash
 node --test scripts/build-deployment-manifest.test.mjs
