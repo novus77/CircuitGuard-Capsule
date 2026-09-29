@@ -10,7 +10,12 @@ import {
 
 contract MockPolicyAdapter is IPolicyAdapter {
     bool private _useOverride;
+    bool private _reverts;
     PolicyEvaluation private _overrideEvaluation;
+
+    function setReverts(bool value) external {
+        _reverts = value;
+    }
 
     function setEvaluation(Decision decision, uint8 outputs, PolicyError error) external {
         _useOverride = true;
@@ -22,6 +27,7 @@ contract MockPolicyAdapter is IPolicyAdapter {
     }
 
     function evaluate(uint8 inputs) external view returns (PolicyEvaluation memory) {
+        require(!_reverts, "adapter reverted");
         if (_useOverride) return _overrideEvaluation;
 
         bool active = inputs & (1 << 0) != 0;

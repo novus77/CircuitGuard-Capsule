@@ -548,7 +548,7 @@ git commit -m "feat: add dual-asset CircuitGuard treasury"
 - Create: `contracts/test/mocks/MaliciousRecipient.sol`
 - Create: `contracts/src/DemoMerchant.sol`
 
-- [ ] **Step 1: Add failing proposal lifecycle tests**
+- [x] **Step 1: Add failing proposal lifecycle tests**
 
 Add tests for:
 
@@ -565,17 +565,17 @@ reentrant native recipient cannot call Treasury again
 failed native/ERC20 transfer rolls back proposal and spend
 ```
 
-- [ ] **Step 2: Run and verify the new tests fail**
+- [x] **Step 2: Run and verify the new tests fail**
 
 Run: `forge test --root contracts --match-contract CircuitGuardTreasuryTest -vv`
 
 Expected: FAIL at missing proposal methods.
 
-- [ ] **Step 3: Implement proposal storage and derivation**
+- [x] **Step 3: Implement proposal storage and derivation**
 
 `requestTransfer` accepts only `Asset`, recipient, `uint128 amount`, and `bytes32 memoHash`. Derive policy flags from Treasury state; never accept flags from calldata. Store the packed input byte, raw output byte, decision, and error in every proposal.
 
-- [ ] **Step 4: Implement state transitions**
+- [x] **Step 4: Implement state transitions**
 
 Use constants:
 
@@ -586,11 +586,11 @@ uint32 public constant MAX_APPROVAL_DURATION = 30 minutes;
 
 Only a fresh `Allow` calls `_execute`. A non-Allow approved execution clears approval and retains `PendingReview`. Terminal states cannot transition.
 
-- [ ] **Step 5: Implement transfer paths and Demo Merchant**
+- [x] **Step 5: Implement transfer paths and Demo Merchant**
 
 Use a single `_execute` function for both assets. Update state and spend before the external transfer under `nonReentrant`; rely on transaction rollback on failure. `DemoMerchant` emits `NativeOrderPaid(payer, amount, orderId)` from a payable OKB entry point and exposes read-only OKB/USDT0 balance helpers. Because ERC-20 `transfer` has no recipient callback, prove USDT0 delivery using the Treasury `TransferExecuted` event, token `Transfer` event, and merchant balance delta. The merchant has no Treasury privilege.
 
-- [ ] **Step 6: Run the complete lifecycle suite**
+- [x] **Step 6: Run the complete lifecycle suite**
 
 Run:
 
@@ -601,7 +601,7 @@ forge test --root contracts -vv
 
 Expected: all contract tests PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add contracts/src contracts/test

@@ -6,6 +6,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract MockERC20 is ERC20 {
     uint8 private immutable _tokenDecimals;
     uint16 private _feeBps;
+    bool private _transfersRevert;
 
     constructor(string memory name_, string memory symbol_, uint8 decimals_) ERC20(name_, symbol_) {
         _tokenDecimals = decimals_;
@@ -24,7 +25,12 @@ contract MockERC20 is ERC20 {
         _feeBps = feeBps_;
     }
 
+    function setTransfersRevert(bool value) external {
+        _transfersRevert = value;
+    }
+
     function _update(address from, address to, uint256 value) internal override {
+        if (from != address(0) && _transfersRevert) revert("transfers disabled");
         if (from != address(0) && to != address(0) && _feeBps != 0) {
             uint256 fee = value * _feeBps / 10_000;
             super._update(from, to, value - fee);

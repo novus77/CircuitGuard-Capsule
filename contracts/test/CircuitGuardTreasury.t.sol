@@ -3,8 +3,11 @@ pragma solidity 0.8.26;
 
 import { Test } from "forge-std/Test.sol";
 import { CircuitGuardTreasury } from "../src/CircuitGuardTreasury.sol";
+import { DemoMerchant } from "../src/DemoMerchant.sol";
+import { Decision, PolicyError } from "../src/interfaces/IPolicyAdapter.sol";
 import { MockERC20 } from "./mocks/MockERC20.sol";
 import { MockPolicyAdapter } from "./mocks/MockPolicyAdapter.sol";
+import { MaliciousRecipient } from "./mocks/MaliciousRecipient.sol";
 
 contract CircuitGuardTreasuryHarness is CircuitGuardTreasury {
     constructor(
@@ -238,6 +241,317 @@ contract CircuitGuardTreasuryTest is Test {
         vm.expectRevert();
         treasury.emergencyRecover(CircuitGuardTreasury.Asset.OKB, 1);
         vm.stopPrank();
+    }
+
+    function test_trustedLowOkbExecutesImmediately() public {
+        _fundOkb(1 ether);
+        vm.prank(owner);
+        treasury.setRecipientStatus(recipient, CircuitGuardTreasury.RecipientStatus.Trusted);
+
+        vm.prank(agent);
+        uint256 proposalId = treasury.requestTransfer(
+            CircuitGuardTreasury.Asset.OKB, recipient, 0.01 ether, keccak256("okb order")
+        );
+
+        CircuitGuardTreasury.Proposal memory proposal = treasury.getProposal(proposalId);
+        assertEq(recipient.balance, 0.01 ether);
+        assertEq(uint8(proposal.state), uint8(CircuitGuardTreasury.ProposalState.Executed));
+        assertEq(uint8(proposal.decision), uint8(Decision.Allow));
+        assertEq(proposal.inputs, 0x1B);
+        assertEq(proposal.outputs, 0x01);
+    }
+
+    function test_trustedLowUsdt0ExecutesImmediately() public {
+        usdt0.mint(address(treasury), 200e6);
+        vm.prank(owner);
+        treasury.setRecipientStatus(recipient, CircuitGuardTreasury.RecipientStatus.Trusted);
+
+        vm.prank(agent);
+        uint256 proposalId = treasury.requestTransfer(
+            CircuitGuardTreasury.Asset.USDT0, recipient, 3e6, keccak256("token order")
+        );
+
+        CircuitGuardTreasury.Proposal memory proposal = treasury.getProposal(proposalId);
+        assertEq(usdt0.balanceOf(recipient), 3e6);
+        assertEq(uint8(proposal.state), uint8(CircuitGuardTreasury.ProposalState.Executed));
+        assertEq(uint8(proposal.decision), uint8(Decision.Allow));
+    }
+
+    function test_unknownOrHighAmountRequiresReview() public {
+        usdt0.mint(address(treasury), 200e6);
+
+        vm.prank(agent);
+        uint256 unknownId = treasury.requestTransfer(
+            CircuitGuardTreasury.Asset.USDT0, recipient, 3e6, keccak256("unknown")
+        );
+
+        vm.prank(owner);
+        treasury.setRecipientStatus(recipient, CircuitGuardTreasury.RecipientStatus.Trusted);
+        vm.prank(agent);
+        uint256 highId = treasury.requestTransfer(
+            CircuitGuardTreasury.Asset.USDT0, recipient, 30e6, keccak256("high")
+        );
+
+        assertEq(
+            uint8(treasury.getProposal(unknownId).state),
+            uint8(CircuitGuardTreasury.ProposalState.PendingReview)
+        );
+        assertEq(
+            uint8(treasury.getProposal(highId).state),
+            uint8(CircuitGuardTreasury.ProposalState.PendingReview)
+        );
+        assertEq(usdt0.balanceOf(recipient), 0);
+    }
+
+    function test_blockedPausedAndOverBudgetRequestsAreRecordedAsDenied() public {
+        usdt0.mint(address(treasury), 300e6);
+        address blocked = makeAddr("blocked");
+        vm.prank(owner);
+        treasury.setRecipientStatus(blocked, CircuitGuardTreasury.RecipientStatus.Blocked);
+
+        vm.prank(agent);
+        uint256 blockedId = treasury.requestTransfer(
+            CircuitGuardTreasury.Asset.USDT0, blocked, 1e6, keccak256("blocked")
+        );
+
+        vm.prank(owner);
+        treasury.pause();
+        vm.prank(agent);
+        uint256 pausedId = treasury.requestTransfer(
+            CircuitGuardTreasury.Asset.USDT0, recipient, 1e6, keccak256("paused")
+        );
+        vm.prank(owner);
+        treasury.unpause();
+
+        treasury.recordSpend(CircuitGuardTreasury.Asset.USDT0, 100e6);
+        vm.prank(agent);
+        uint256 budgetId = treasury.requestTransfer(
+            CircuitGuardTreasury.Asset.USDT0, recipient, 1, keccak256("budget")
+        );
+
+        _assertState(blockedId, CircuitGuardTreasury.ProposalState.Rejected);
+        _assertState(pausedId, CircuitGuardTreasury.ProposalState.Rejected);
+        _assertState(budgetId, CircuitGuardTreasury.ProposalState.Rejected);
+    }
+
+    function test_ownerApprovalIsReevaluatedThenExecuted() public {
+        usdt0.mint(address(treasury), 200e6);
+        vm.prank(agent);
+        uint256 proposalId = treasury.requestTransfer(
+            CircuitGuardTreasury.Asset.USDT0, recipient, 30e6, keccak256("review")
+        );
+
+        vm.prank(owner);
+        treasury.approveProposal(proposalId, 10 minutes);
+        assertEq(usdt0.balanceOf(recipient), 0);
+
+        vm.prank(agent);
+        treasury.executeApproved(proposalId);
+
+        CircuitGuardTreasury.Proposal memory proposal = treasury.getProposal(proposalId);
+        assertEq(usdt0.balanceOf(recipient), 30e6);
+        assertEq(uint8(proposal.state), uint8(CircuitGuardTreasury.ProposalState.Executed));
+        assertEq(uint8(proposal.decision), uint8(Decision.Allow));
+        assertEq(proposal.inputs & 0x20, 0x20);
+    }
+
+    function test_approvalCannotOverrideBlockedRecipientAndIsCleared() public {
+        usdt0.mint(address(treasury), 200e6);
+        vm.prank(agent);
+        uint256 proposalId = treasury.requestTransfer(
+            CircuitGuardTreasury.Asset.USDT0, recipient, 30e6, keccak256("review")
+        );
+        vm.prank(owner);
+        treasury.approveProposal(proposalId, 10 minutes);
+        vm.prank(owner);
+        treasury.setRecipientStatus(recipient, CircuitGuardTreasury.RecipientStatus.Blocked);
+
+        vm.prank(agent);
+        treasury.executeApproved(proposalId);
+
+        CircuitGuardTreasury.Proposal memory proposal = treasury.getProposal(proposalId);
+        assertEq(uint8(proposal.state), uint8(CircuitGuardTreasury.ProposalState.PendingReview));
+        assertEq(uint8(proposal.decision), uint8(Decision.Deny));
+        assertEq(proposal.approvalExpiresAt, 0);
+        assertEq(usdt0.balanceOf(recipient), 0);
+    }
+
+    function test_approvalCannotOverridePauseOrBudget() public {
+        usdt0.mint(address(treasury), 300e6);
+        vm.prank(agent);
+        uint256 pausedId = treasury.requestTransfer(
+            CircuitGuardTreasury.Asset.USDT0, recipient, 30e6, keccak256("paused review")
+        );
+        vm.prank(owner);
+        treasury.approveProposal(pausedId, 10 minutes);
+        vm.prank(owner);
+        treasury.pause();
+        vm.prank(agent);
+        treasury.executeApproved(pausedId);
+        assertEq(treasury.getProposal(pausedId).approvalExpiresAt, 0);
+
+        vm.prank(owner);
+        treasury.unpause();
+        vm.prank(agent);
+        uint256 budgetId = treasury.requestTransfer(
+            CircuitGuardTreasury.Asset.USDT0, recipient, 30e6, keccak256("budget review")
+        );
+        vm.prank(owner);
+        treasury.approveProposal(budgetId, 10 minutes);
+        treasury.recordSpend(CircuitGuardTreasury.Asset.USDT0, 100e6);
+        vm.prank(agent);
+        treasury.executeApproved(budgetId);
+
+        _assertState(pausedId, CircuitGuardTreasury.ProposalState.PendingReview);
+        _assertState(budgetId, CircuitGuardTreasury.ProposalState.PendingReview);
+        assertEq(treasury.getProposal(budgetId).approvalExpiresAt, 0);
+        assertEq(usdt0.balanceOf(recipient), 0);
+    }
+
+    function test_approvalAndProposalExpiryAndCancellation() public {
+        usdt0.mint(address(treasury), 300e6);
+        vm.prank(agent);
+        uint256 approvalId = treasury.requestTransfer(
+            CircuitGuardTreasury.Asset.USDT0, recipient, 30e6, keccak256("approval expiry")
+        );
+        vm.prank(owner);
+        treasury.approveProposal(approvalId, 1 minutes);
+        vm.warp(block.timestamp + 1 minutes + 1);
+        vm.prank(agent);
+        vm.expectRevert(CircuitGuardTreasury.ApprovalExpired.selector);
+        treasury.executeApproved(approvalId);
+
+        vm.prank(agent);
+        uint256 expiryId = treasury.requestTransfer(
+            CircuitGuardTreasury.Asset.USDT0, recipient, 30e6, keccak256("proposal expiry")
+        );
+        vm.warp(block.timestamp + treasury.PROPOSAL_LIFETIME());
+        treasury.expireProposal(expiryId);
+        _assertState(expiryId, CircuitGuardTreasury.ProposalState.Expired);
+
+        vm.prank(agent);
+        uint256 cancelId = treasury.requestTransfer(
+            CircuitGuardTreasury.Asset.USDT0, recipient, 30e6, keccak256("cancel")
+        );
+        vm.prank(agent);
+        treasury.cancelProposal(cancelId);
+        _assertState(cancelId, CircuitGuardTreasury.ProposalState.Cancelled);
+
+        vm.prank(owner);
+        vm.expectRevert(CircuitGuardTreasury.InvalidProposalState.selector);
+        treasury.approveProposal(cancelId, 10 minutes);
+    }
+
+    function test_reentrantNativeRecipientCannotReenterTreasury() public {
+        _fundOkb(1 ether);
+        MaliciousRecipient malicious = new MaliciousRecipient(address(treasury));
+        vm.prank(owner);
+        treasury.setRecipientStatus(
+            address(malicious), CircuitGuardTreasury.RecipientStatus.Trusted
+        );
+        vm.prank(owner);
+        treasury.setAgent(address(malicious), true);
+
+        vm.prank(agent);
+        treasury.requestTransfer(
+            CircuitGuardTreasury.Asset.OKB, address(malicious), 0.01 ether, keccak256("reentrancy")
+        );
+
+        assertTrue(malicious.reentryAttempted());
+        assertFalse(malicious.reentrySucceeded());
+        assertEq(address(malicious).balance, 0.01 ether);
+    }
+
+    function test_failedNativeAndTokenTransfersRollBackStateAndSpend() public {
+        _fundOkb(1 ether);
+        MaliciousRecipient rejecting = new MaliciousRecipient(address(treasury));
+        rejecting.setRejectNative(true);
+        vm.prank(owner);
+        treasury.setRecipientStatus(
+            address(rejecting), CircuitGuardTreasury.RecipientStatus.Trusted
+        );
+
+        vm.prank(agent);
+        vm.expectRevert(CircuitGuardTreasury.NativeTransferFailed.selector);
+        treasury.requestTransfer(
+            CircuitGuardTreasury.Asset.OKB,
+            address(rejecting),
+            0.01 ether,
+            keccak256("failed native")
+        );
+        assertEq(treasury.nextProposalId(), 1);
+        assertEq(treasury.currentBudget(CircuitGuardTreasury.Asset.OKB).spent, 0);
+
+        usdt0.mint(address(treasury), 100e6);
+        usdt0.setTransfersRevert(true);
+        vm.prank(owner);
+        treasury.setRecipientStatus(recipient, CircuitGuardTreasury.RecipientStatus.Trusted);
+        vm.prank(agent);
+        vm.expectRevert();
+        treasury.requestTransfer(
+            CircuitGuardTreasury.Asset.USDT0, recipient, 1e6, keccak256("failed token")
+        );
+        assertEq(treasury.nextProposalId(), 1);
+        assertEq(treasury.currentBudget(CircuitGuardTreasury.Asset.USDT0).spent, 0);
+    }
+
+    function test_demoMerchantReportsNativeOrderAndTokenBalance() public {
+        DemoMerchant merchant = new DemoMerchant(address(usdt0));
+        usdt0.mint(address(merchant), 7e6);
+        vm.deal(address(this), 1 ether);
+
+        (bool success,) = address(merchant).call{ value: 0.1 ether }("");
+
+        assertTrue(success);
+        assertEq(merchant.okbBalance(), 0.1 ether);
+        assertEq(merchant.usdt0Balance(), 7e6);
+        assertEq(merchant.nextOrderId(), 2);
+    }
+
+    function test_requestValidationAndAuthorization() public {
+        usdt0.mint(address(treasury), 1e6);
+        vm.prank(depositor);
+        vm.expectRevert(CircuitGuardTreasury.UnauthorizedAgent.selector);
+        treasury.requestTransfer(CircuitGuardTreasury.Asset.USDT0, recipient, 1, bytes32(0));
+
+        vm.startPrank(agent);
+        vm.expectRevert(CircuitGuardTreasury.ZeroAddress.selector);
+        treasury.requestTransfer(CircuitGuardTreasury.Asset.USDT0, address(0), 1, bytes32(0));
+        vm.expectRevert(CircuitGuardTreasury.ZeroAmount.selector);
+        treasury.requestTransfer(CircuitGuardTreasury.Asset.USDT0, recipient, 0, bytes32(0));
+        vm.expectRevert(CircuitGuardTreasury.InsufficientBalance.selector);
+        treasury.requestTransfer(CircuitGuardTreasury.Asset.USDT0, recipient, 2e6, bytes32(0));
+        vm.stopPrank();
+    }
+
+    function test_adapterRevertIsRecordedAsInvalidAndNeverTransfers() public {
+        usdt0.mint(address(treasury), 10e6);
+        adapter.setReverts(true);
+
+        vm.prank(agent);
+        uint256 proposalId = treasury.requestTransfer(
+            CircuitGuardTreasury.Asset.USDT0, recipient, 1e6, keccak256("adapter failure")
+        );
+
+        CircuitGuardTreasury.Proposal memory proposal = treasury.getProposal(proposalId);
+        assertEq(uint8(proposal.state), uint8(CircuitGuardTreasury.ProposalState.Rejected));
+        assertEq(uint8(proposal.decision), uint8(Decision.Invalid));
+        assertEq(uint8(proposal.error), uint8(PolicyError.StepReverted));
+        assertEq(proposal.outputs, type(uint8).max);
+        assertEq(usdt0.balanceOf(recipient), 0);
+    }
+
+    function _fundOkb(uint256 amount) private {
+        vm.prank(depositor);
+        (bool success,) = address(treasury).call{ value: amount }("");
+        assertTrue(success);
+    }
+
+    function _assertState(uint256 proposalId, CircuitGuardTreasury.ProposalState state)
+        private
+        view
+    {
+        assertEq(uint8(treasury.getProposal(proposalId).state), uint8(state));
     }
 
     function _deploy(
