@@ -336,7 +336,7 @@ git commit -m "feat: define canonical CircuitGuard policy circuit"
 - Create: `contracts/src/libraries/PolicyCodec.sol`
 - Create: `contracts/test/PolicyCodec.t.sol`
 
-- [ ] **Step 1: Write failing codec tests**
+- [x] **Step 1: Write failing codec tests**
 
 Create `contracts/test/PolicyCodec.t.sol` with tests asserting that all six booleans map to bits `0...5`, `0x01` decodes to `Allow`, `0x02` to `Review`, `0x00` to `Deny`, and `0x03`/high bits return `Invalid` with `OutputMalformed`.
 
@@ -347,13 +347,13 @@ uint8 packed = PolicyCodec.pack(true, true, false, true, true, false);
 assertEq(packed, 0x1B);
 ```
 
-- [ ] **Step 2: Run the test and verify it fails**
+- [x] **Step 2: Run the test and verify it fails**
 
 Run: `forge test --root contracts --match-contract PolicyCodecTest -vv`
 
 Expected: FAIL because `PolicyCodec.sol` and policy types do not exist.
 
-- [ ] **Step 3: Define exact TapeOut interfaces and shared policy types**
+- [x] **Step 3: Define exact TapeOut interfaces and shared policy types**
 
 `ITapeOutProcessor.sol` must expose exactly:
 
@@ -370,7 +370,7 @@ interface ITapeOutProcessor {
 
 `IPolicyAdapter.sol` defines `Decision`, `PolicyError`, and `PolicyEvaluation` exactly as in the approved Spec, plus `evaluate(uint8)` and `health()`.
 
-- [ ] **Step 4: Implement `PolicyCodec`**
+- [x] **Step 4: Implement `PolicyCodec`**
 
 ```solidity
 library PolicyCodec {
@@ -387,7 +387,7 @@ library PolicyCodec {
 }
 ```
 
-- [ ] **Step 5: Run and format**
+- [x] **Step 5: Run and format**
 
 Run:
 
@@ -398,7 +398,7 @@ forge test --root contracts --match-contract PolicyCodecTest -vv
 
 Expected: all codec tests PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add contracts/src/interfaces contracts/src/libraries contracts/test/PolicyCodec.t.sol
