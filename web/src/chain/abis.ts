@@ -75,6 +75,24 @@ export const treasuryAbi = [
   },
   {
     type: 'function',
+    name: 'previewProposal',
+    stateMutability: 'view',
+    inputs: [{ name: 'proposalId', type: 'uint256' }],
+    outputs: [
+      { name: 'inputs', type: 'uint8' },
+      {
+        name: 'evaluation',
+        type: 'tuple',
+        components: [
+          { name: 'decision', type: 'uint8' },
+          { name: 'outputs', type: 'uint8' },
+          { name: 'error', type: 'uint8' },
+        ],
+      },
+    ],
+  },
+  {
+    type: 'function',
     name: 'requestTransfer',
     stateMutability: 'nonpayable',
     inputs: [

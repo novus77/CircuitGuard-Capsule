@@ -848,32 +848,32 @@ git commit -m "feat: add X Layer clients and transaction journal"
 - Create: `web/src/styles.css`
 - Create: `web/test/app.test.tsx`
 
-- [ ] **Step 1: Write failing UI tests**
+- [x] **Step 1: Write failing UI tests**
 
 Test read-only rendering, both balances/budgets, six named policy bits, ALLOW/REVIEW/DENY states, wrong-chain warning, no automatic wallet request, pending button lock, and experimental-risk banner.
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 Run: `cd web && npm test -- --run app.test.tsx`
 
 Expected: FAIL because dashboard components are missing.
 
-- [ ] **Step 3: Implement the read model hook**
+- [x] **Step 3: Implement the read model hook**
 
 `useCircuitGuard` reads deployment health, Treasury balances, budgets, owner, pause state, Adapter health, and selected proposal. It returns explicit `loading`, `ready`, `unavailable`, and `wrong-network` states; it never substitutes stale values after an RPC error.
 
-- [ ] **Step 4: Implement the four focused components**
+- [x] **Step 4: Implement the four focused components**
 
 - `VerificationBar`: chain, Processor, Circuit, hash, Container, Adapter, Treasury, wallet.
 - `TreasuryPanel`: separate OKB/USDT0 balances, limits, spend, owner/Agent warning.
 - `ProposalForm`: fixed asset selector, recipient, amount, memo hash, three presets, preview then send.
 - `CircuitDecision`: named inputs, packed byte, raw outputs, decision, policy error, proposal state.
 
-- [ ] **Step 5: Implement approve/execute/cancel actions**
+- [x] **Step 5: Implement approve/execute/cancel actions**
 
 Show each wallet confirmation as a separate explicit action. Approval duration defaults to 10 minutes and cannot exceed the contract maximum. Refresh from chain after every confirmed receipt.
 
-- [ ] **Step 6: Test, build, and enforce artifact constraints**
+- [x] **Step 6: Test, build, and enforce artifact constraints**
 
 Run:
 
@@ -886,7 +886,7 @@ rg -n 'fonts\.googleapis|googletagmanager|cdn\.|api[_-]?key' web/dist || true
 
 Expected: tests and build PASS; `find` prints nothing; scan finds no forbidden dependency.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add web/src web/test
