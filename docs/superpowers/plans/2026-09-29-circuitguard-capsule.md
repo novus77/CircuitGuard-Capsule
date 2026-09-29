@@ -489,17 +489,17 @@ git commit -m "feat: add fail-closed TapeOut policy adapter"
 - Create: `contracts/test/mocks/MockPolicyAdapter.sol`
 - Create: `contracts/test/CircuitGuardTreasury.t.sol`
 
-- [ ] **Step 1: Write failing administration and accounting tests**
+- [x] **Step 1: Write failing administration and accounting tests**
 
 Test constructor validation, immutable recovery/USDT0/Adapter addresses, two-step ownership, Agent authorization, recipient enum exclusivity, independent budgets, UTC day rollover, OKB receive, exact-delta USDT0 deposit, owner-only configuration, and emergency recovery only while paused.
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 Run: `forge test --root contracts --match-contract CircuitGuardTreasuryTest -vv`
 
 Expected: FAIL because Treasury is missing.
 
-- [ ] **Step 3: Implement enums and storage**
+- [x] **Step 3: Implement enums and storage**
 
 Use the approved shapes:
 
@@ -518,11 +518,11 @@ struct Budget {
 
 Use `mapping(Asset => Budget)`, `mapping(address => bool) agents`, and `mapping(address => RecipientStatus) recipientStatus`.
 
-- [ ] **Step 4: Implement funding and administration**
+- [x] **Step 4: Implement funding and administration**
 
 Use `SafeERC20`, `Ownable2Step`, `Pausable`, and `ReentrancyGuard`. `receive()` emits funding. `depositUSDT0` compares `balanceAfter - balanceBefore` to the requested amount. `emergencyRecover` sends an exact amount only to immutable `recoveryAddress` and only while paused.
 
-- [ ] **Step 5: Run tests**
+- [x] **Step 5: Run tests**
 
 Run:
 
@@ -533,7 +533,7 @@ forge test --root contracts --match-contract CircuitGuardTreasuryTest -vv
 
 Expected: administration/funding/budget tests PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add contracts/src/CircuitGuardTreasury.sol contracts/test/mocks/MockERC20.sol contracts/test/mocks/MockPolicyAdapter.sol contracts/test/CircuitGuardTreasury.t.sol
