@@ -157,6 +157,16 @@ export const adapterAbi = [
   },
 ] as const
 
+export const factoryAbi = [
+  {
+    type: 'function',
+    name: 'isCPU',
+    stateMutability: 'view',
+    inputs: [{ name: 'processor', type: 'address' }],
+    outputs: [{ name: '', type: 'bool' }],
+  },
+] as const
+
 export const processorAbi = [
   {
     type: 'function',

@@ -211,7 +211,7 @@ git commit -m "refactor: centralize X Layer deployment configuration"
 - Create: `web/src/chain/quorum.ts`
 - Create: `web/test/quorum.test.ts`
 
-- [ ] **Step 1: Write failing snapshot comparison tests**
+- [x] **Step 1: Write failing snapshot comparison tests**
 
 Test matching snapshots, primary failure, secondary failure, chain mismatch, missing bytecode, manifest mismatch, and deterministic first-conflict reporting:
 
@@ -230,17 +230,17 @@ expect(compareIdentitySnapshots(expected, okSnapshot, { ...okSnapshot, treasuryC
 })
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 Run: `cd web && npm test -- --run quorum.test.ts`
 
 Expected: FAIL because `quorum.ts` does not exist.
 
-- [ ] **Step 3: Extend minimal read ABIs**
+- [x] **Step 3: Extend minimal read ABIs**
 
 Add Factory `isCPU(address)`, Processor `circuitInfo(uint256)` and `netlist(uint256)`, and reuse Adapter `health()`. Do not add write methods.
 
-- [ ] **Step 4: Implement the reader and pure comparator**
+- [x] **Step 4: Implement the reader and pure comparator**
 
 `readIdentitySnapshot(client, manifest)` performs:
 
@@ -260,11 +260,11 @@ const [chainId, registered, metadata, netlist, processorCode, containerCode, ada
 
 Reject chain IDs other than 196 and empty code. Hash bytecode and netlist with `keccak256`. `verifyIdentityQuorum` catches each endpoint independently and passes optional snapshots to the pure comparator.
 
-- [ ] **Step 5: Run tests and TypeScript build**
+- [x] **Step 5: Run tests and TypeScript build**
 
 Expected: quorum tests and `npm run build` PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add web/src/chain/abis.ts web/src/chain/quorum.ts web/test/quorum.test.ts
