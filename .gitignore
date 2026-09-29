@@ -1,0 +1,12 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+contracts/cache/
+contracts/out/
+contracts/broadcast/
+contracts/lib/
+web/node_modules/
+web/dist/
+web/playwright-report/
+web/test-results/
