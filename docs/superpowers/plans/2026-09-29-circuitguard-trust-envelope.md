@@ -55,7 +55,7 @@ web/tests/demo.spec.ts
 - Create: `web/test/endpoint.test.ts`
 - Create: `web/test/trustEnvelope.test.ts`
 
-- [ ] **Step 1: Write failing endpoint and classification tests**
+- [x] **Step 1: Write failing endpoint and classification tests**
 
 Cover checksum normalization, invalid chain/container input, classification priority, and the shared signing gate:
 
@@ -75,7 +75,7 @@ expect(canSign({ overall: 'verified', walletReady: true, modelReady: true, unres
 expect(canSign({ overall: 'verified', walletReady: true, modelReady: true, unresolved: true })).toBe(false)
 ```
 
-- [ ] **Step 2: Run the focused tests and verify failure**
+- [x] **Step 2: Run the focused tests and verify failure**
 
 Run:
 
@@ -85,7 +85,7 @@ cd web && npm test -- --run endpoint.test.ts trustEnvelope.test.ts
 
 Expected: FAIL because the domain modules do not exist.
 
-- [ ] **Step 3: Implement pure domain types and rules**
+- [x] **Step 3: Implement pure domain types and rules**
 
 `endpoint.ts` exports `formatEndpointCoordinate(chainId, container)`. `trustEnvelope.ts` exports:
 
@@ -129,11 +129,11 @@ export function canSign(input: {
 }
 ```
 
-- [ ] **Step 4: Run focused tests**
+- [x] **Step 4: Run focused tests**
 
 Expected: both test files PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add web/src/domain/endpoint.ts web/src/domain/trustEnvelope.ts web/test/endpoint.test.ts web/test/trustEnvelope.test.ts
