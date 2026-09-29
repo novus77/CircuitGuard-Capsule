@@ -35,6 +35,23 @@ jobs:
           npm test -- --run
           npm run build
         working-directory: web
+      - name: Validate deployment manifest tooling
+        run: node --test scripts/build-deployment-manifest.test.mjs
+      - name: Audit production web artifact
+        run: |
+          if find web/dist -name '*.map' -print -quit | grep -q .; then
+            echo 'Source maps are forbidden in the release artifact'
+            exit 1
+          fi
+          if grep -R -n -E 'CIRCUITGUARD_E2E|1111111111111111111111111111111111111111|fonts\.googleapis|googletagmanager|cdn\.|api[_-]?key|BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY' web/dist; then
+            echo 'Forbidden test marker, remote asset, or secret pattern found'
+            exit 1
+          fi
+          npm --prefix web run build -- --mode e2e --outDir dist-e2e-audit
+          if grep -R -n -E 'CIRCUITGUARD_E2E|1111111111111111111111111111111111111111' web/dist-e2e-audit; then
+            echo 'E2E fixtures must not survive an optimized build in any mode'
+            exit 1
+          fi
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
         working-directory: web

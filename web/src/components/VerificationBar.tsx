@@ -36,8 +36,12 @@ export function VerificationBar({ model, onConnect }: Props) {
       <button
         class="wallet-button"
         type="button"
-        disabled={model.walletStatus === 'connecting'}
+        disabled={
+          model.walletStatus === 'connecting'
+          || (model.walletStatus !== 'connected' && model.trustEnvelope.overall !== 'verified')
+        }
         aria-busy={model.walletStatus === 'connecting'}
+        title={model.trustEnvelope.overall === 'verified' ? undefined : model.signingDisabledReason}
         onClick={onConnect}
       >
         {model.walletStatus === 'connected'

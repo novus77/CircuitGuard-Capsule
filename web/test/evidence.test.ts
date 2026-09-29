@@ -9,6 +9,7 @@ import {
 
 const HASH_A = `0x${'a'.repeat(64)}` as Hash
 const HASH_B = `0x${'b'.repeat(64)}` as Hash
+const BLOCK_A = `0x${'c'.repeat(64)}` as Hash
 const TREASURY = '0x4444444444444444444444444444444444444444' as Address
 
 const makeLog = (
@@ -16,7 +17,15 @@ const makeLog = (
   blockNumber: bigint,
   logIndex: number,
   transactionHash: Hash = HASH_A,
-): ProposalLifecycleLog => ({ kind, proposalId: 7n, blockNumber, logIndex, transactionHash })
+): ProposalLifecycleLog => ({
+  kind,
+  proposalId: 7n,
+  blockHash: BLOCK_A,
+  blockNumber,
+  transactionIndex: transactionHash === HASH_A ? 0 : 1,
+  logIndex,
+  transactionHash,
+})
 
 const lifecycle = [
   makeLog('executed', 110n, 2, HASH_B),

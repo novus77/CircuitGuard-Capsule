@@ -151,4 +151,11 @@ describe('identity snapshot reader', () => {
 
     expect(result.status).toBe('degraded')
   })
+
+  it('blocks when either endpoint explicitly reports the wrong chain', async () => {
+    const wrongChain = makeReader({ getChainId: async () => 1 })
+    const result = await verifyIdentityQuorum(wrongChain, makeReader(), makeDeployedManifest())
+
+    expect(result).toMatchObject({ status: 'blocked', summary: 'Invalid RPC identity' })
+  })
 })

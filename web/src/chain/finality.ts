@@ -1,4 +1,4 @@
-import type { Hash } from 'viem'
+import { TransactionReceiptNotFoundError, type Hash } from 'viem'
 import {
   TransactionJournal,
   type TransactionEvidence,
@@ -15,6 +15,18 @@ export type FinalityClient = {
   getBlockNumber(): Promise<bigint>
 }
 
+export const readTransactionReceipt = async (
+  client: FinalityClient,
+  hash: Hash,
+): Promise<FinalityReceipt | null> => {
+  try {
+    return await client.getTransactionReceipt({ hash })
+  } catch (error) {
+    if (error instanceof TransactionReceiptNotFoundError) return null
+    throw error
+  }
+}
+
 export const deriveFinality = (
   previous: TransactionEvidence,
   receipt: FinalityReceipt | null,
@@ -26,7 +38,7 @@ export const deriveFinality = (
   }
 
   if (!receipt) {
-    if (previous.status === 'mined') {
+    if (previous.status === 'mined' || previous.status === 'final') {
       const { blockNumber: _blockNumber, blockHash: _blockHash, ...rest } = previous
       return {
         ...rest,
@@ -40,7 +52,7 @@ export const deriveFinality = (
   }
 
   if (
-    previous.status === 'mined' &&
+    (previous.status === 'mined' || previous.status === 'final') &&
     previous.blockHash &&
     previous.blockHash.toLowerCase() !== receipt.blockHash.toLowerCase()
   ) {
@@ -105,7 +117,7 @@ export const waitForJournaledFinality = async (
     if (!previous) throw new Error(`Transaction ${hash} does not exist`)
 
     const [receipt, latestBlock] = await Promise.all([
-      client.getTransactionReceipt({ hash }).catch(() => null),
+      readTransactionReceipt(client, hash),
       client.getBlockNumber(),
     ])
     const next = deriveFinality(previous, receipt, latestBlock, requiredConfirmations)

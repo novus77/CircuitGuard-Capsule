@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'preact/hooks'
 import {
   getAddress,
+  encodeFunctionData,
   keccak256,
   toBytes,
   type Address,
@@ -15,6 +16,7 @@ import {
   verifyExecutionContext,
   waitForJournaledFinality,
 } from '../chain/client'
+import { deriveFinality, readTransactionReceipt } from '../chain/finality'
 import {
   loadProposalEvidence,
   type ProposalEvidence,
@@ -287,9 +289,37 @@ export function useCircuitGuard(): {
     }
 
     try {
-      const layers = await verifyLayers(manifest)
+      let layers = await verifyLayers(manifest)
+      const journal = new TransactionJournal(window.localStorage)
+      const storedEvidence = journal.entries().at(-1)
+      if (storedEvidence) {
+        const [receipt, latestBlock] = await Promise.all([
+          readTransactionReceipt(primaryClient, storedEvidence.hash),
+          primaryClient.getBlockNumber(),
+        ])
+        const recoveredEvidence = deriveFinality(
+          storedEvidence,
+          receipt,
+          latestBlock,
+          manifest.safeConfirmations,
+        )
+        journal.update(recoveredEvidence)
+
+        if (recoveredEvidence.reorgDetected) {
+          layers = {
+            ...layers,
+            execution: {
+              status: 'blocked',
+              summary: 'Execution evidence reorg detected',
+              detail: `Transaction ${recoveredEvidence.hash} is no longer anchored to its recorded block.`,
+            },
+          }
+        }
+      }
+
       const overall = classifyOverall(layers)
-      const unresolved = new TransactionJournal(window.localStorage).unresolved()
+      const unresolved = journal.unresolved()
+      const latestEvidence = journal.entries().at(-1)
       if (overall === 'blocked') {
         const envelope = buildTrustEnvelope(manifest.endpointCoordinate, layers, {
           walletReady: false,
@@ -350,7 +380,7 @@ export function useCircuitGuard(): {
           status: 'ready',
           trustEnvelope: envelope,
           signingDisabledReason: disabledReason(envelope, runtime),
-          transactionEvidence: unresolved ?? current.transactionEvidence,
+          transactionEvidence: latestEvidence ?? current.transactionEvidence,
           pending: Boolean(unresolved),
           owner,
           paused,
@@ -386,7 +416,30 @@ export function useCircuitGuard(): {
     void refresh()
   }, [refresh])
 
+  useEffect(() => {
+    const evidenceStatus = model.transactionEvidence?.status
+    if (!model.pending || (evidenceStatus !== 'submitted' && evidenceStatus !== 'mined')) return
+    let cancelled = false
+    let timer = 0
+    const poll = async () => {
+      await refresh()
+      if (!cancelled) timer = window.setTimeout(() => void poll(), 5_000)
+    }
+    timer = window.setTimeout(() => void poll(), 5_000)
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+    }
+  }, [model.pending, model.transactionEvidence?.status, refresh])
+
   const connect = useCallback(async () => {
+    if (model.trustEnvelope.overall !== 'verified') {
+      setModel((current) => ({
+        ...current,
+        error: current.signingDisabledReason ?? 'Verify the endpoint before connecting a wallet',
+      }))
+      return
+    }
     const provider = (window as Window & { ethereum?: EIP1193Provider }).ethereum
     if (!provider) {
       setModel((current) => ({ ...current, error: 'No injected wallet found' }))
@@ -425,31 +478,89 @@ export function useCircuitGuard(): {
         error: message,
       }))
     }
-  }, [])
+  }, [model.trustEnvelope.overall])
 
   const preflight = useCallback(async (connected: ConnectedWallet, manifest: DeployedManifest) => {
     const layers = await verifyLayers(manifest)
     const overall = classifyOverall(layers)
     if (overall !== 'verified') {
-      const envelope = buildTrustEnvelope(manifest.endpointCoordinate, layers, {
+      const runtime = {
         walletReady: true,
         modelReady: model.status === 'ready',
         unresolved: model.pending,
-      })
-      throw new Error(disabledReason(envelope, {
-        walletReady: true,
-        modelReady: model.status === 'ready',
-        unresolved: model.pending,
-      }) ?? 'Endpoint verification failed')
+      }
+      const envelope = buildTrustEnvelope(manifest.endpointCoordinate, layers, runtime)
+      const reason = disabledReason(envelope, runtime) ?? 'Endpoint verification failed'
+      setModel((current) => ({
+        ...current,
+        trustEnvelope: envelope,
+        signingDisabledReason: reason,
+      }))
+      throw new Error(reason)
     }
 
-    await verifyExecutionContext(connected, [
-      { address: manifest.processor, codeHash: manifest.processorCodeHash },
-      { address: manifest.container, codeHash: manifest.containerCodeHash },
-      { address: manifest.adapter, codeHash: manifest.adapterCodeHash },
-      { address: manifest.treasury, codeHash: manifest.treasuryCodeHash },
-    ])
+    try {
+      await verifyExecutionContext(connected, [
+        { address: manifest.processor, codeHash: manifest.processorCodeHash },
+        { address: manifest.container, codeHash: manifest.containerCodeHash },
+        { address: manifest.adapter, codeHash: manifest.adapterCodeHash },
+        { address: manifest.treasury, codeHash: manifest.treasuryCodeHash },
+      ])
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : 'Wallet execution identity mismatch'
+      setModel((current) => {
+        const execution: VerificationLayer = {
+          status: 'blocked',
+          summary: 'Wallet execution identity mismatch',
+          detail,
+        }
+        const envelope = buildTrustEnvelope(
+          current.trustEnvelope.coordinate,
+          {
+            site: current.trustEnvelope.site,
+            policy: current.trustEnvelope.policy,
+            execution,
+          },
+          { walletReady: true, modelReady: current.status === 'ready', unresolved: current.pending },
+        )
+        return {
+          ...current,
+          trustEnvelope: envelope,
+          signingDisabledReason: disabledReason(envelope, {
+            walletReady: true,
+            modelReady: current.status === 'ready',
+            unresolved: current.pending,
+          }),
+        }
+      })
+      throw error
+    }
   }, [model.pending, model.status])
+
+  const simulateWalletWrite = useCallback(async (
+    connected: ConnectedWallet,
+    request: {
+      address: Address
+      functionName: 'requestTransfer' | 'approveProposal' | 'executeApproved' | 'cancelProposal'
+      args: readonly unknown[]
+    },
+  ) => {
+    const from = connected.account?.address
+    if (!from) throw new Error('Wallet account is unavailable')
+    const data = encodeFunctionData({
+      abi: treasuryAbi,
+      functionName: request.functionName,
+      args: request.args,
+    } as Parameters<typeof encodeFunctionData>[0])
+    const walletRequest = connected.request as unknown as (request: {
+      method: 'eth_call'
+      params: readonly [{ from: Address; to: Address; data: `0x${string}` }, 'latest']
+    }) => Promise<unknown>
+    await walletRequest({
+      method: 'eth_call',
+      params: [{ from, to: request.address, data }, 'latest'],
+    })
+  }, [])
 
   const send = useCallback(
     async (label: string, write: (walletClient: ConnectedWallet) => Promise<Hash>) => {
@@ -636,50 +747,54 @@ export function useCircuitGuard(): {
         const asset = draft.asset === 'OKB' ? 0 : 1
         const amount = parseAssetAmount(draft.asset, draft.amount)
         const memoHash = keccak256(toBytes(draft.memo.trim() || 'CircuitGuard transfer'))
-        await send('Request transfer', (client) =>
-          client.writeContract({
+        await send('Request transfer', async (client) => {
+          const request = {
             address: treasury,
-            abi: treasuryAbi,
             functionName: 'requestTransfer',
             args: [asset, draft.recipient, amount, memoHash],
-          }),
-        )
+          } as const
+          await simulateWalletWrite(client, request)
+          return client.writeContract({ ...request, abi: treasuryAbi })
+        })
       },
       approveProposal: async (proposalId) => {
         if (!treasury) throw new Error('Treasury is not deployed')
-        await send('Approve proposal', (client) =>
-          client.writeContract({
+        await send('Approve proposal', async (client) => {
+          const request = {
             address: treasury,
-            abi: treasuryAbi,
             functionName: 'approveProposal',
             args: [proposalId, 600],
-          }),
-        )
+          } as const
+          await simulateWalletWrite(client, request)
+          return client.writeContract({ ...request, abi: treasuryAbi })
+        })
       },
       executeApproved: async (proposalId) => {
         if (!treasury) throw new Error('Treasury is not deployed')
-        await send('Execute approved proposal', (client) =>
-          client.writeContract({
+        await send('Execute approved proposal', async (client) => {
+          const request = {
             address: treasury,
-            abi: treasuryAbi,
             functionName: 'executeApproved',
             args: [proposalId],
-          }),
-        )
+          } as const
+          await simulateWalletWrite(client, request)
+          return client.writeContract({ ...request, abi: treasuryAbi })
+        })
       },
       cancelProposal: async (proposalId) => {
         if (!treasury) throw new Error('Treasury is not deployed')
-        await send('Cancel proposal', (client) =>
-          client.writeContract({
+        await send('Cancel proposal', async (client) => {
+          const request = {
             address: treasury,
-            abi: treasuryAbi,
             functionName: 'cancelProposal',
             args: [proposalId],
-          }),
-        )
+          } as const
+          await simulateWalletWrite(client, request)
+          return client.writeContract({ ...request, abi: treasuryAbi })
+        })
       },
     }
-  }, [connect, send])
+  }, [connect, send, simulateWalletWrite])
 
   return { model, actions }
 }

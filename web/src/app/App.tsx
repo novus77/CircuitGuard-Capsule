@@ -23,7 +23,11 @@ export function Dashboard({
       {model.status === 'wrong-network' && (
         <div class="network-alert" role="alert">Switch your wallet to X Layer (chain 196) before signing.</div>
       )}
-      {model.error && <div class="network-alert" role="alert">{model.error}</div>}
+      {model.error && (
+        <div class="network-alert" role="status" aria-label="Application status">
+          {model.error}
+        </div>
+      )}
       <main>
         <section class="hero-copy">
           <div>

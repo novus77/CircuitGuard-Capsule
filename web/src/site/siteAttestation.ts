@@ -42,6 +42,6 @@ export const createE2ESiteAttestation = (mode: string): SiteAttestationSource =>
 }
 
 export const siteAttestationSource: SiteAttestationSource =
-  import.meta.env.MODE === 'e2e'
+  import.meta.env.DEV && import.meta.env.MODE === 'e2e'
     ? createE2ESiteAttestation('e2e')
     : noSiteAttestation

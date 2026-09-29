@@ -954,6 +954,19 @@ git add .github web/playwright.config.ts web/tests scripts/build-deployment-mani
 git commit -m "test: add CircuitGuard browser and CI verification"
 ```
 
+### Trust Envelope V1.1 local hardening
+
+- [x] Bind the human-readable endpoint coordinate to chain `196` and the checksummed Container.
+- [x] Verify immutable Factory, Circuit, netlist, Container, Adapter, and Treasury identity through two official X Layer RPC endpoints.
+- [x] Default browser Site attestation to fail-closed `UNVERIFIED`; keep the verified fixture out of production artifacts.
+- [x] Gate every write on Site, Policy, Execution, wallet chain, wallet-visible bytecode hashes, ready dynamic state, and an empty unresolved-transaction slot.
+- [x] Track transaction evidence through Submitted, Mined, Final, Reverted, and pre-final reorganization states.
+- [x] Reconstruct Proposal evidence from Treasury logs in bounded block windows and reject state conflicts.
+- [x] Present three accessible Trust cards and a confirmation-aware evidence timeline on desktop and mobile.
+- [x] Cover verified, degraded, blocked, wallet mismatch, confirmation depth, production-unverified, and the four policy paths with deterministic browser tests.
+
+This completes local Trust Envelope V1.1 hardening only. Mainnet deployment, TapeKit publication/readback, and hackathon submission remain pending in Tasks 13–15.
+
 ## Task 13: Mainnet deployment, readback, and contract verification
 
 **Files:**

@@ -1,6 +1,7 @@
 import { getAddress, isAddress, type Address, type Hash } from 'viem'
 import deploymentJson from '../generated/deployment.json'
 import { formatEndpointCoordinate } from '../domain/endpoint'
+import { e2eDeployment } from './deployment.e2e'
 
 export const CANONICAL_NETLIST_HASH =
   '0xd722aa6af62aa44c485ec471d4234803c859aec19684caa2a510bdca1675c269' as Hash
@@ -124,13 +125,6 @@ export const requireDeployedManifest = (manifest: DeploymentManifest): DeployedM
   return { ...manifest, processor, container }
 }
 
-type E2EGlobal = typeof globalThis & {
-  __CIRCUITGUARD_E2E_DEPLOYMENT__?: DeploymentManifest
-}
-
-const e2eDeployment =
-  import.meta.env.MODE === 'e2e'
-    ? (globalThis as E2EGlobal).__CIRCUITGUARD_E2E_DEPLOYMENT__
-    : undefined
-
-export const deploymentManifest = (e2eDeployment ?? deploymentJson) as DeploymentManifest
+export const deploymentManifest = (
+  import.meta.env.DEV && import.meta.env.MODE === 'e2e' ? e2eDeployment : deploymentJson
+) as DeploymentManifest

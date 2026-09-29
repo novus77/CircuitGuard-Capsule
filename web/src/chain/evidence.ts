@@ -14,7 +14,9 @@ export type ProposalLifecycleLog = {
   kind: ProposalEvidenceKind
   proposalId: bigint
   transactionHash: Hash
+  blockHash: Hash
   blockNumber: bigint
+  transactionIndex: number
   logIndex: number
   decision?: number
 }
@@ -27,7 +29,9 @@ export type ProposalEvidence = ProposalLifecycleLog & {
 
 type RawEvidenceLog = {
   transactionHash?: Hash | null
+  blockHash?: Hash | null
   blockNumber?: bigint | null
+  transactionIndex?: number | null
   logIndex?: number | null
   args?: { proposalId?: bigint; decision?: number }
 }
@@ -86,6 +90,9 @@ export const buildProposalTimeline = (
     if (left.blockNumber !== right.blockNumber) {
       return left.blockNumber < right.blockNumber ? -1 : 1
     }
+    if (left.transactionIndex !== right.transactionIndex) {
+      return left.transactionIndex - right.transactionIndex
+    }
     if (left.logIndex !== right.logIndex) return left.logIndex - right.logIndex
     return left.transactionHash.localeCompare(right.transactionHash)
   })
@@ -115,8 +122,16 @@ const normalizeLog = (
   kind: ProposalEvidenceKind,
   proposalId: bigint,
 ): ProposalLifecycleLog => {
-  if (!raw.transactionHash || raw.blockNumber === null || raw.blockNumber === undefined) {
+  if (
+    !raw.transactionHash
+    || !raw.blockHash
+    || raw.blockNumber === null
+    || raw.blockNumber === undefined
+  ) {
     throw new Error(`${kind} evidence is missing mined transaction identity`)
+  }
+  if (raw.transactionIndex === null || raw.transactionIndex === undefined) {
+    throw new Error(`${kind} evidence is missing transactionIndex`)
   }
   if (raw.logIndex === null || raw.logIndex === undefined) {
     throw new Error(`${kind} evidence is missing logIndex`)
@@ -129,7 +144,9 @@ const normalizeLog = (
     kind,
     proposalId,
     transactionHash: raw.transactionHash,
+    blockHash: raw.blockHash,
     blockNumber: raw.blockNumber,
+    transactionIndex: raw.transactionIndex,
     logIndex: raw.logIndex,
     ...(raw.args?.decision === undefined ? {} : { decision: Number(raw.args.decision) }),
   }

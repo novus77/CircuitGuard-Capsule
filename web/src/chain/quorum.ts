@@ -219,10 +219,27 @@ export const verifyIdentityQuorum = async (
   secondaryClient: IdentityReader,
   manifest: DeployedManifest,
 ): Promise<VerificationLayer> => {
-  const [primary, secondary] = await Promise.all([
-    readIdentitySnapshot(primaryClient, manifest).catch(() => undefined),
-    readIdentitySnapshot(secondaryClient, manifest).catch(() => undefined),
+  const [primaryResult, secondaryResult] = await Promise.allSettled([
+    readIdentitySnapshot(primaryClient, manifest),
+    readIdentitySnapshot(secondaryClient, manifest),
   ])
+
+  const deterministicFailure = [primaryResult, secondaryResult].find(
+    (result): result is PromiseRejectedResult =>
+      result.status === 'rejected'
+      && result.reason instanceof Error
+      && /must be on chain 196|runtime bytecode is missing/i.test(result.reason.message),
+  )
+  if (deterministicFailure) {
+    return {
+      status: 'blocked',
+      summary: 'Invalid RPC identity',
+      detail: deterministicFailure.reason.message,
+    }
+  }
+
+  const primary = primaryResult.status === 'fulfilled' ? primaryResult.value : undefined
+  const secondary = secondaryResult.status === 'fulfilled' ? secondaryResult.value : undefined
 
   return compareIdentitySnapshots(manifest, primary, secondary)
 }

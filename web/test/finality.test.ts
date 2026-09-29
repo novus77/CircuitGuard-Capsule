@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { Hash } from 'viem'
-import { deriveFinality, waitForJournaledFinality } from '../src/chain/finality'
+import {
+  deriveFinality,
+  readTransactionReceipt,
+  waitForJournaledFinality,
+} from '../src/chain/finality'
 import {
   TransactionJournal,
   type JournalStorage,
@@ -63,6 +67,21 @@ describe('transaction finality', () => {
     })
   })
 
+  it('does not trust a locally terminal transaction after its receipt disappears', () => {
+    const locallyFinal = makeEvidence({
+      status: 'final',
+      blockNumber: 100n,
+      blockHash: HASH_A,
+      confirmations: 12,
+    })
+
+    expect(deriveFinality(locallyFinal, null, 112n, 12)).toMatchObject({
+      status: 'submitted',
+      confirmations: 0,
+      reorgDetected: true,
+    })
+  })
+
   it('records a reverted receipt as terminal evidence', () => {
     expect(
       deriveFinality(
@@ -72,6 +91,14 @@ describe('transaction finality', () => {
         12,
       ),
     ).toMatchObject({ status: 'reverted', confirmations: 1 })
+  })
+
+  it('propagates transport errors instead of classifying them as a reorganization', async () => {
+    const transportError = new Error('RPC rate limited')
+    await expect(readTransactionReceipt({
+      getTransactionReceipt: async () => Promise.reject(transportError),
+      getBlockNumber: async () => 100n,
+    }, HASH_A)).rejects.toBe(transportError)
   })
 
   it('polls until terminal finality and updates the journal', async () => {

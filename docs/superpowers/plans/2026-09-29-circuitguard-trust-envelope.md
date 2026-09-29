@@ -607,11 +607,11 @@ git commit -m "test: validate Trust Envelope deployment evidence"
 - Modify: `.github/workflows/ci.yml`
 - Modify: `docs/superpowers/plans/2026-09-29-circuitguard-capsule.md`
 
-- [ ] **Step 1: Replace mutable global fixtures with E2E build mode**
+- [x] **Step 1: Replace mutable global fixtures with E2E build mode**
 
 Run the Playwright server with `vite --mode e2e`. Route both official RPC origins. Remove `window.__CIRCUITGUARD_E2E_DEPLOYMENT__` from application source and Playwright initialization.
 
-- [ ] **Step 2: Add failing Trust Envelope browser scenarios**
+- [x] **Step 2: Add failing Trust Envelope browser scenarios**
 
 Assert:
 
@@ -627,17 +627,17 @@ production mode without TapeKit attestation -> UNVERIFIED, no wallet request
 
 Keep the four existing policy scenarios.
 
-- [ ] **Step 3: Run and fix E2E tests**
+- [x] **Step 3: Run and fix E2E tests**
 
 Run: `cd web && npm run test:e2e`
 
 Expected: all deterministic browser scenarios PASS without public RPC access.
 
-- [ ] **Step 4: Extend CI and release artifact checks**
+- [x] **Step 4: Extend CI and release artifact checks**
 
 CI runs manifest unit tests and scans the production bundle for E2E marker strings, source maps, remote assets, and secrets. Browser tests continue using only mocked RPC responses.
 
-- [ ] **Step 5: Run final local verification**
+- [x] **Step 5: Run final local verification**
 
 ```bash
 make test
@@ -648,7 +648,7 @@ git diff --check
 
 Expected: circuit tests, 43 Solidity tests including 2 invariant suites, all frontend tests, manifest tests, browser tests, and production build PASS.
 
-- [ ] **Step 6: Update the parent plan and commit**
+- [x] **Step 6: Update the parent plan and commit**
 
 Record Trust Envelope V1.1 as complete before resuming Task 13. Do not mark mainnet deployment, TapeKit publication, or submission tasks complete.
 
