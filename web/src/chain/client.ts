@@ -2,7 +2,6 @@ import {
   createPublicClient,
   createWalletClient,
   custom,
-  defineChain,
   getAddress,
   http,
   type Address,
@@ -10,21 +9,21 @@ import {
   type Hash,
   type PublicClient,
 } from 'viem'
+import {
+  XLAYER_PRIMARY_RPC_URL,
+  XLAYER_SECONDARY_RPC_URL,
+  xLayer,
+} from '../config/xlayer'
 import { TransactionJournal, type TransactionStatus } from '../state/transactionJournal'
 
-export const XLAYER_RPC_URL = 'https://rpc.xlayer.tech'
-
-export const xLayer = defineChain({
-  id: 196,
-  name: 'X Layer',
-  nativeCurrency: { name: 'OKB', symbol: 'OKB', decimals: 18 },
-  rpcUrls: { default: { http: [XLAYER_RPC_URL] } },
-  blockExplorers: { default: { name: 'OKLink', url: 'https://www.oklink.com/xlayer' } },
+export const primaryClient = createPublicClient({
+  chain: xLayer,
+  transport: http(XLAYER_PRIMARY_RPC_URL),
 })
 
-export const publicClient = createPublicClient({
+export const secondaryClient = createPublicClient({
   chain: xLayer,
-  transport: http(XLAYER_RPC_URL),
+  transport: http(XLAYER_SECONDARY_RPC_URL),
 })
 
 export async function connectWallet(provider: EIP1193Provider) {
@@ -51,7 +50,7 @@ export async function verifyExecutionContext(
   contractAddresses: readonly Address[],
 ): Promise<void> {
   const [publicChainId, walletChainId] = await Promise.all([
-    publicClient.getChainId(),
+    primaryClient.getChainId(),
     walletClient.getChainId(),
   ])
   if (publicChainId !== xLayer.id || walletChainId !== xLayer.id) {
@@ -59,7 +58,7 @@ export async function verifyExecutionContext(
   }
 
   const bytecodes = await Promise.all(
-    contractAddresses.map((address) => publicClient.getCode({ address })),
+    contractAddresses.map((address) => primaryClient.getCode({ address })),
   )
   if (bytecodes.some((code) => !code || code === '0x')) {
     throw new Error('Configured contract code is missing')

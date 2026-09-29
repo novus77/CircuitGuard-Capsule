@@ -7,34 +7,17 @@ import {
   type EIP1193Provider,
   type Hash,
 } from 'viem'
-import deploymentJson from '../generated/deployment.json'
 import { adapterAbi, treasuryAbi } from '../chain/abis'
 import {
   connectWallet,
-  publicClient,
+  primaryClient,
   verifyExecutionContext,
   waitForJournaledReceipt,
 } from '../chain/client'
+import { deploymentManifest as deployment } from '../config/deployment'
 import { formatAssetAmount, parseAssetAmount, type Asset } from '../domain/amount'
 import { decodeDecision, type PolicyDecision, type PolicyFacts } from '../domain/policy'
 import { TransactionJournal } from '../state/transactionJournal'
-
-type DeploymentManifest = {
-  status: string
-  chainId: number
-  processor?: Address
-  circuitId?: string
-  netlistHash?: Hash
-  container?: Address
-  adapter?: Address
-  treasury?: Address
-}
-
-declare global {
-  interface Window {
-    __CIRCUITGUARD_E2E_DEPLOYMENT__?: DeploymentManifest
-  }
-}
 
 export type AssetSnapshot = {
   balance: string
@@ -100,8 +83,6 @@ const emptyFacts: PolicyFacts = {
   withinDailyBudget: false,
   humanApproved: false,
 }
-
-const deployment = window.__CIRCUITGUARD_E2E_DEPLOYMENT__ ?? deploymentJson as DeploymentManifest
 
 const policyErrors = ['None', 'NetlistMismatch', 'StepReverted', 'StateMismatch', 'OutputMalformed']
 const proposalStates = ['PendingReview', 'Executed', 'Rejected', 'Cancelled', 'Expired']
@@ -177,33 +158,33 @@ export function useCircuitGuard(): {
       const adapter = getAddress(deployment.adapter)
       const [owner, paused, okbBalance, usdt0Balance, okbBudget, usdt0Budget, health] =
         await Promise.all([
-          publicClient.readContract({ address: treasury, abi: treasuryAbi, functionName: 'owner' }),
-          publicClient.readContract({ address: treasury, abi: treasuryAbi, functionName: 'paused' }),
-          publicClient.readContract({
+          primaryClient.readContract({ address: treasury, abi: treasuryAbi, functionName: 'owner' }),
+          primaryClient.readContract({ address: treasury, abi: treasuryAbi, functionName: 'paused' }),
+          primaryClient.readContract({
             address: treasury,
             abi: treasuryAbi,
             functionName: 'assetBalance',
             args: [0],
           }),
-          publicClient.readContract({
+          primaryClient.readContract({
             address: treasury,
             abi: treasuryAbi,
             functionName: 'assetBalance',
             args: [1],
           }),
-          publicClient.readContract({
+          primaryClient.readContract({
             address: treasury,
             abi: treasuryAbi,
             functionName: 'currentBudget',
             args: [0],
           }),
-          publicClient.readContract({
+          primaryClient.readContract({
             address: treasury,
             abi: treasuryAbi,
             functionName: 'currentBudget',
             args: [1],
           }),
-          publicClient.readContract({ address: adapter, abi: adapterAbi, functionName: 'health' }),
+          primaryClient.readContract({ address: adapter, abi: adapterAbi, functionName: 'health' }),
         ])
 
       if (!health[0]) throw new Error('Policy Adapter provenance check failed')
@@ -284,7 +265,7 @@ export function useCircuitGuard(): {
         ])
         const hash = await write(wallet)
         journal.begin({ hash, label, createdAt: Date.now() })
-        const status = await waitForJournaledReceipt(publicClient, journal, hash)
+        const status = await waitForJournaledReceipt(primaryClient, journal, hash)
         if (status === 'reverted') throw new Error(`${label} reverted`)
         await refresh()
       } catch (error) {
@@ -309,13 +290,13 @@ export function useCircuitGuard(): {
         if (!treasury) throw new Error('Treasury is not deployed')
         try {
           const [proposal, preview] = await Promise.all([
-            publicClient.readContract({
+            primaryClient.readContract({
               address: treasury,
               abi: treasuryAbi,
               functionName: 'getProposal',
               args: [proposalId],
             }),
-            publicClient.readContract({
+            primaryClient.readContract({
               address: treasury,
               abi: treasuryAbi,
               functionName: 'previewProposal',

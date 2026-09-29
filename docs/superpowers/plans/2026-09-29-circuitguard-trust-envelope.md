@@ -149,7 +149,7 @@ git commit -m "feat: define CircuitGuard trust envelope"
 - Modify: `web/src/hooks/useCircuitGuard.ts`
 - Create: `web/test/deployment.test.ts`
 
-- [ ] **Step 1: Write failing configuration tests**
+- [x] **Step 1: Write failing configuration tests**
 
 Assert that production RPC hosts are distinct, both clients target chain 196, a non-deployed manifest remains valid, and deployed-only access rejects incomplete evidence:
 
@@ -165,13 +165,13 @@ expect(() => requireDeployedManifest({
 })).toThrow('deploymentBlock')
 ```
 
-- [ ] **Step 2: Run the test and verify failure**
+- [x] **Step 2: Run the test and verify failure**
 
 Run: `cd web && npm test -- --run deployment.test.ts`
 
 Expected: FAIL because configuration modules do not exist.
 
-- [ ] **Step 3: Implement configuration modules**
+- [x] **Step 3: Implement configuration modules**
 
 Use the two official mainnet endpoints documented by X Layer:
 
@@ -184,11 +184,11 @@ Reference: `https://web3.okx.com/onchainos/dev-docs/xlayer/developer/rpc-endpoin
 
 `deployment.ts` owns `DeploymentManifest`, `DeployedManifest`, `isDeployedManifest`, `requireDeployedManifest`, the canonical netlist hash, and environment selection. A deployed manifest permits `site.status = 'unpublished'`; only `site.status = 'published'` requires `manifestHash`. The E2E fixture is selected only when `import.meta.env.MODE === 'e2e'`; a production build must tree-shake its marker string.
 
-- [ ] **Step 4: Refactor clients without changing behavior**
+- [x] **Step 4: Refactor clients without changing behavior**
 
 `client.ts` exports `primaryClient`, `secondaryClient`, and `xLayer`. Replace existing `publicClient` imports with `primaryClient`. Preserve the current wallet client and receipt behavior until Task 5.
 
-- [ ] **Step 5: Run tests and build**
+- [x] **Step 5: Run tests and build**
 
 ```bash
 cd web && npm test -- --run
@@ -197,7 +197,7 @@ cd web && npm run build
 
 Expected: all current tests PASS and the production build contains neither the E2E manifest marker nor fake deployment addresses.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add web/src/config web/src/chain/client.ts web/src/hooks/useCircuitGuard.ts web/test/deployment.test.ts
