@@ -671,11 +671,11 @@ git commit -m "test: add CircuitGuard fuzz and invariant coverage"
 - Create: `contracts/test/XLayerFork.t.sol`
 - Create: `deployments/xlayer.json`
 
-- [ ] **Step 1: Write the fork test against known X Layer infrastructure**
+- [x] **Step 1: Write the fork test against known X Layer infrastructure**
 
 Assert Factory code exists at `0x1f09daefa827f02cbb40967cc91b259763760761`, USDT0 code exists at `0x779Ded0c9e1022225f8E0630b35a9b54bE713736`, and USDT0 reports 6 decimals and symbol `USD₮0`.
 
-- [ ] **Step 2: Run the fork test**
+- [x] **Step 2: Run the fork test**
 
 Run:
 
@@ -685,7 +685,7 @@ forge test --root contracts --match-contract XLayerForkTest --fork-url https://r
 
 Expected: infrastructure assertions PASS without sending a transaction.
 
-- [ ] **Step 3: Implement quote-first Processor creation script**
+- [x] **Step 3: Implement quote-first Processor creation script**
 
 `CreateProcessor.s.sol` must read `deployFee()`, log the exact value, and create:
 
@@ -698,15 +698,15 @@ mint price: 66000000000000 wei (0.000066 OKB)
 
 The script must not contain a key or fixed nonce.
 
-- [ ] **Step 4: Implement exact material/tapeout script**
+- [x] **Step 4: Implement exact material/tapeout script**
 
 `TapeoutPolicy.s.sol` reads material price, protocol fee, and tapeout fee; mints exactly 13 units of material ID `0`; calls `tapeout(CANONICAL_NETLIST, 6, 2)`; and logs the resulting Circuit ID.
 
-- [ ] **Step 5: Implement contract deployment script**
+- [x] **Step 5: Implement contract deployment script**
 
 `DeployCircuitGuard.s.sol` reads Processor, Circuit ID, owner, recovery address, and Agent from environment variables, deploys Adapter then Treasury and DemoMerchant, configures the merchant as trusted, and logs all addresses.
 
-- [ ] **Step 6: Add an empty deployment schema, not fake addresses**
+- [x] **Step 6: Add an empty deployment schema, not fake addresses**
 
 Create `deployments/xlayer.json`:
 
@@ -721,7 +721,7 @@ Create `deployments/xlayer.json`:
 }
 ```
 
-- [ ] **Step 7: Test scripts locally without broadcasting**
+- [x] **Step 7: Test scripts locally without broadcasting**
 
 Run:
 
@@ -732,7 +732,7 @@ forge test --root contracts -vv
 
 Expected: compilation and all tests PASS; no mainnet transaction is sent.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add contracts/script contracts/test/XLayerFork.t.sol deployments/xlayer.json

@@ -14,6 +14,26 @@ contract MockTapeOutFactory is ITapeOutFactory {
     function isCPU(address processor) external view returns (bool) {
         return _processors[processor];
     }
+
+    function deployFee() external pure returns (uint256) {
+        return 0;
+    }
+
+    function cpuCount() external pure returns (uint256) {
+        return 0;
+    }
+
+    function cpuAt(uint256) external pure returns (address) {
+        revert("missing processor");
+    }
+
+    function createCPU(string calldata, string calldata, string calldata, uint256, uint256)
+        external
+        payable
+        returns (address, address)
+    {
+        return (address(0), address(0));
+    }
 }
 
 contract MockTapeOutProcessor is ITapeOutProcessor {
@@ -29,6 +49,14 @@ contract MockTapeOutProcessor is ITapeOutProcessor {
 
     constructor(bytes memory initialNetlist) {
         _netlist = initialNetlist;
+    }
+
+    function transistors() external pure returns (address) {
+        return address(0);
+    }
+
+    function TAPEOUT_FEE() external pure returns (uint256) {
+        return 0;
     }
 
     function setCircuitExists(bool exists) external {
@@ -81,5 +109,9 @@ contract MockTapeOutProcessor is ITapeOutProcessor {
     {
         require(!_stepReverts, "step reverted");
         return (_newState, _outputs);
+    }
+
+    function tapeout(bytes calldata, uint32, uint32) external payable returns (uint256) {
+        return 0;
     }
 }
