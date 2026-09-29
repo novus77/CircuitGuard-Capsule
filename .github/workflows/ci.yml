@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: foundry-rs/foundry-toolchain@v1
+      - name: Install Solidity dependencies
+        run: |
+          forge install foundry-rs/forge-std --no-git
+          forge install OpenZeppelin/openzeppelin-contracts --no-git
+        working-directory: contracts
+      - name: Verify canonical circuit
+        run: node --test circuits/test/policy.test.mjs
+      - name: Test contracts
+        run: forge test --root contracts -vv
+      - name: Install web dependencies
+        run: npm ci
+        working-directory: web
+      - name: Test and build web application
+        run: |
+          npm test -- --run
+          npm run build
+        working-directory: web
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+        working-directory: web
+      - name: Test deterministic browser demo
+        run: npm run test:e2e
+        working-directory: web

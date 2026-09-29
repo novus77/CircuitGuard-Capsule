@@ -58,7 +58,9 @@ export function CircuitDecision({
         <label>Proposal ID<input inputMode="numeric" value={proposalId} onInput={(event) => setProposalId(event.currentTarget.value)} /></label>
         <button type="button" disabled={model.pending || invalidId || model.status !== 'ready'} onClick={() => void loadProposal()}>Load evidence</button>
         <button type="button" disabled={disabled} onClick={() => void actions.approveProposal(parsedId)}>Approve 10 minutes</button>
-        <button type="button" disabled={disabled} onClick={() => void actions.executeApproved(parsedId)}>Execute approved</button>
+        {model.decision !== 'DENY' && (
+          <button type="button" disabled={disabled} onClick={() => void actions.executeApproved(parsedId)}>Execute approved</button>
+        )}
         <button type="button" disabled={disabled} onClick={() => void actions.cancelProposal(parsedId)}>Cancel proposal</button>
       </div>
       {loadError && <p class="form-error">{loadError}</p>}

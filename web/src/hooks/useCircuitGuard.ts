@@ -30,6 +30,12 @@ type DeploymentManifest = {
   treasury?: Address
 }
 
+declare global {
+  interface Window {
+    __CIRCUITGUARD_E2E_DEPLOYMENT__?: DeploymentManifest
+  }
+}
+
 export type AssetSnapshot = {
   balance: string
   instantLimit: string
@@ -95,7 +101,7 @@ const emptyFacts: PolicyFacts = {
   humanApproved: false,
 }
 
-const deployment = deploymentJson as DeploymentManifest
+const deployment = window.__CIRCUITGUARD_E2E_DEPLOYMENT__ ?? deploymentJson as DeploymentManifest
 
 const policyErrors = ['None', 'NetlistMismatch', 'StepReverted', 'StateMismatch', 'OutputMalformed']
 const proposalStates = ['PendingReview', 'Executed', 'Rejected', 'Cancelled', 'Expired']

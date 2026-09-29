@@ -901,7 +901,7 @@ git commit -m "feat: build CircuitGuard verification dashboard"
 - Create: `.github/workflows/ci.yml`
 - Create: `scripts/build-deployment-manifest.mjs`
 
-- [ ] **Step 1: Write Playwright tests for the three demo paths**
+- [x] **Step 1: Write Playwright tests for the three demo paths**
 
 Use deterministic mocked JSON-RPC fixtures for browser CI and assert:
 
@@ -912,7 +912,7 @@ blocked recipient -> DENY, no execute control
 trusted 0.01 OKB -> ALLOW with independent budget
 ```
 
-- [ ] **Step 2: Run and fix the E2E tests**
+- [x] **Step 2: Run and fix the E2E tests**
 
 Run:
 
@@ -925,11 +925,11 @@ npx playwright test
 
 Expected: all browser scenarios PASS.
 
-- [ ] **Step 3: Implement manifest generation**
+- [x] **Step 3: Implement manifest generation**
 
 `build-deployment-manifest.mjs` validates chain ID, address format, canonical netlist hash, USDT0 address, required transaction hashes, and `status = deployed` before writing `web/src/generated/deployment.json`. It exits non-zero on a missing or malformed field.
 
-- [ ] **Step 4: Add CI**
+- [x] **Step 4: Add CI**
 
 CI jobs run:
 
@@ -941,13 +941,13 @@ cd web && npm ci && npm test -- --run && npm run build
 
 Fork and mainnet-read tests remain opt-in because public RPC availability must not make ordinary CI flaky.
 
-- [ ] **Step 5: Run the root verification suite**
+- [x] **Step 5: Run the root verification suite**
 
 Run: `make test && make build-web`
 
 Expected: all local suites PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add .github web/playwright.config.ts web/tests scripts/build-deployment-manifest.mjs
