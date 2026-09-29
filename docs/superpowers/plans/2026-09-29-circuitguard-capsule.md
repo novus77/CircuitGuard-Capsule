@@ -412,7 +412,7 @@ git commit -m "feat: add TapeOut policy interfaces and codec"
 - Create: `contracts/test/mocks/MockTapeOut.sol`
 - Create: `contracts/test/TapeOutPolicyAdapter.t.sol`
 
-- [ ] **Step 1: Write failing constructor and evaluation tests**
+- [x] **Step 1: Write failing constructor and evaluation tests**
 
 Cover these exact cases:
 
@@ -428,13 +428,13 @@ return Invalid/StepReverted when step reverts
 return Invalid/NetlistMismatch after runtime mutation
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 Run: `forge test --root contracts --match-contract TapeOutPolicyAdapterTest -vv`
 
 Expected: FAIL because the Adapter does not exist.
 
-- [ ] **Step 3: Implement immutable provenance checks**
+- [x] **Step 3: Implement immutable provenance checks**
 
 Use these constants in `TapeOutPolicyAdapter.sol`:
 
@@ -450,7 +450,7 @@ uint8 internal constant UNAVAILABLE_OUTPUT = type(uint8).max;
 
 The constructor stores immutable Factory, Processor, and Circuit ID after checking `isCPU`, `ownerOf`, metadata, and netlist hash.
 
-- [ ] **Step 4: Implement `evaluate` with no authorizing failure path**
+- [x] **Step 4: Implement `evaluate` with no authorizing failure path**
 
 The decision mapping must be:
 
@@ -463,7 +463,7 @@ return PolicyEvaluation(Decision.Invalid, raw, PolicyError.OutputMalformed);
 
 Before `step`, re-read and hash the netlist. Wrap `step` in `try/catch`; require empty state, one output byte, and zero high bits.
 
-- [ ] **Step 5: Run Adapter tests and the full contract suite**
+- [x] **Step 5: Run Adapter tests and the full contract suite**
 
 Run:
 
@@ -474,7 +474,7 @@ forge test --root contracts -vv
 
 Expected: all tests PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add contracts/src/TapeOutPolicyAdapter.sol contracts/test/mocks/MockTapeOut.sol contracts/test/TapeOutPolicyAdapter.t.sol
